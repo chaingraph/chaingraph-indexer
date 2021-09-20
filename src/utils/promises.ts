@@ -1,5 +1,3 @@
-import { AnyAaaaRecord } from 'dns'
-
 // inspired in https://github.com/sindresorhus/p-whilst
 export const whilst = async (
   condition: (actionResult: boolean) => boolean,

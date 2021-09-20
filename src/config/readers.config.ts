@@ -1,6 +1,6 @@
-import { ReadersConfig } from 'types/config'
+import { ReadersConfig } from '../types/config'
 
-export const readersConfig: ReadersConfig = {
+export const readers: ReadersConfig = {
   eosio: [
     {
       name: 'eos',

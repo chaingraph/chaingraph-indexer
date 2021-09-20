@@ -1,4 +1,4 @@
-import { hasura } from '../hasura'
+const hasura: any = {}
 
 let isFirsLoad = true
 
