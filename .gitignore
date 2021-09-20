@@ -1,10 +1,5 @@
-.history
-dist/
-node_modules/
-*.log
-.DS_Store
-abi.json
-
+node_modules
+# Keep environment variables out of version control
 .env
-!.env.example
-__errors/
+dist
+.bin

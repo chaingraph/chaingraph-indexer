@@ -2,7 +2,6 @@ import { log } from '../utils/logger'
 import { LoaderBuffer } from '../whitelists'
 import { rpc } from '../utils/eosio'
 import { getChainGraphTableRowData } from '../utils/table-row'
-import { hasura } from '../hasura'
 import omit from 'lodash.omit'
 
 export const loadCurrentTableState = async (whitelistReader: LoaderBuffer) => {
@@ -17,12 +16,12 @@ export const loadCurrentTableState = async (whitelistReader: LoaderBuffer) => {
     const scopes = entry.scope
       ? [{ scope: entry.scope }]
       : (
-        await rpc.get_table_by_scope({
-          code: entry.code,
-          table: entry.table,
-          limit: 1000000,
-        })
-      ).rows
+          await rpc.get_table_by_scope({
+            code: entry.code,
+            table: entry.table,
+            limit: 1000000,
+          })
+        ).rows
 
     // get all table rows acrross all scope flat them out on allRows array
     const allRows = (
@@ -57,7 +56,8 @@ export const loadCurrentTableState = async (whitelistReader: LoaderBuffer) => {
     ).flat()
 
     // upsert all table rows on the database
-    await hasura.query.upsert_table_rows({ objects: allRows })
+    // await hasura.query.upsert_table_rows({ objects: allRows })
+
     log.info(
       `State for ${JSON.stringify(
         omit(entry, 'table_key'),
