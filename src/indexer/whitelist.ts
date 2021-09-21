@@ -2,8 +2,7 @@ import {
   EosioReaderActionFilter,
   EosioReaderTableRowFilter,
 } from '@blockmatic/eosio-ship-reader'
-import { log } from '../utils/logger'
-import { getSubscription } from './subscriptions'
+import { log } from '../lib/logger'
 
 export interface ChainGraphTableRegistry extends EosioReaderTableRowFilter {
   table_key: string
@@ -15,6 +14,7 @@ export interface TokenRegistry {
   table_key: string
 }
 
+// this state keeps updated every .1s through polling
 let _chaingraph_table_registry: ChainGraphTableRegistry[] = []
 let _actions_whitelist: EosioReaderActionFilter[] = []
 let _chaingraph_token_registry: any = []
@@ -31,7 +31,7 @@ const get_table_rows_whitelist = () => _table_rows_whitelist
 
 const get_token_list = () => _token_list
 
-export interface LoaderBuffer {
+export interface WhitelistReader {
   get_chaingraph_table_registry: () => ChainGraphTableRegistry[]
   get_chaingraph_token_registry: () => any
   get_table_rows_whitelist: () => EosioReaderTableRowFilter[]
@@ -129,5 +129,5 @@ export const initWhiteList = async () => {
     get_table_rows_whitelist,
     get_actions_whitelist,
     get_token_list,
-  } as LoaderBuffer
+  } as WhitelistReader
 }

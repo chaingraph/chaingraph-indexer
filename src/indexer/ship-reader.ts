@@ -4,8 +4,8 @@ import {
   EosioReaderConfig,
 } from '@blockmatic/eosio-ship-reader'
 import fetch from 'node-fetch'
-import { eosioApi, eosioHost, fecthAbi } from '../utils/eosio'
-import { LoaderBuffer } from '../whitelists'
+import { eosioApi, eosioHost, fecthAbi } from '../lib/eosio'
+import { LoaderBuffer } from './whitelist'
 
 export const loadReader = async (whitelistReader: LoaderBuffer) => {
   const info = await fetch(`${eosioApi}/v1/chain/get_info`).then((res: any) =>

@@ -1,7 +1,7 @@
-import { log } from '../utils/logger'
-import { LoaderBuffer } from '../whitelists'
-import { rpc } from '../utils/eosio'
-import { getChainGraphTableRowData } from '../utils/table-row'
+import { log } from '../lib/logger'
+import { LoaderBuffer } from './whitelist'
+import { rpc } from '../lib/eosio'
+import { getChainGraphTableRowData } from '../lib/table-row'
 import omit from 'lodash.omit'
 
 export const loadCurrentTableState = async (whitelistReader: LoaderBuffer) => {

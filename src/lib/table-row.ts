@@ -1,4 +1,4 @@
-import { LoaderBuffer } from '../whitelists'
+import { LoaderBuffer } from '../indexer/whitelist'
 import { EosioReaderTableRow } from '@blockmatic/eosio-ship-reader'
 import omit from 'lodash.omit'
 
