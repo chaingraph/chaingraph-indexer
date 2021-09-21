@@ -1,8 +1,7 @@
 import { initWhiteList } from './whitelist'
 import { startRealTimeStreaming } from './real-time'
 import { loadCurrentTableState } from './load-state'
-// import { loadHistory } from './load-history'
-import { log } from '../lib/logger'
+import { loadHistory } from './load-history'
 
 export const startIndexer = async () => {
   // get an instance of the whitelist reader
@@ -14,5 +13,5 @@ export const startIndexer = async () => {
   // load current state of whitelisted tables, overwritting real-time stream shouldn't be an issue since it's the latest state
   loadCurrentTableState(whitelistReader)
   // load historical action and transaction data from dFuse community edition
-  // loadHistory(whitelistReader)
+  loadHistory(whitelistReader)
 }

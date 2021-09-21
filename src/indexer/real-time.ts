@@ -1,11 +1,13 @@
 import { loadReader } from './ship-reader'
-import { LoaderBuffer } from './whitelist'
-import { prisma } from '../lib/prisma'
+import { WhitelistReader } from './whitelist'
 import omit from 'lodash.omit'
 import { log } from '../lib/logger'
-import { getChainGraphTableRowData, getPrimaryKey } from '../lib/table-row'
+import { getChainGraphTableRowData, getPrimaryKey } from './table-row'
+import { hasura } from '../lib/hasura'
 
-export const startRealTimeStreaming = async (whitelistReader: LoaderBuffer) => {
+export const startRealTimeStreaming = async (
+  whitelistReader: WhitelistReader,
+) => {
   log.info('Starting realtime indexing from eosio ship ...')
 
   const { close$, blocks$, errors$ } = await loadReader(whitelistReader)
@@ -23,7 +25,7 @@ export const startRealTimeStreaming = async (whitelistReader: LoaderBuffer) => {
         .filter((row) => row.present)
         .map((row) => getChainGraphTableRowData(row, whitelistReader))
 
-      prisma.query.upsert_table_rows({ objects: insertTableRowsObjects })
+      hasura.query.upsert_table_rows({ objects: insertTableRowsObjects })
 
       // delete table_rows
       const deleteTableRows = block.table_rows
@@ -44,10 +46,10 @@ export const startRealTimeStreaming = async (whitelistReader: LoaderBuffer) => {
             },
           }
         })
-      prisma.query.delete_table_rows({ where: { _or: deleteTableRows } })
+      hasura.query.delete_table_rows({ where: { _or: deleteTableRows } })
 
       // insert block data
-      await prisma.query.upsert_block({
+      await hasura.query.upsert_block({
         object: {
           chain: 'eos',
           ...omit(block, ['actions', 'table_rows', 'transactions', 'chain_id']),
@@ -60,7 +62,7 @@ export const startRealTimeStreaming = async (whitelistReader: LoaderBuffer) => {
         chain: 'eos',
         block_num: block.block_num,
       }))
-      await prisma.query.upsert_transactions({
+      await hasura.query.upsert_transactions({
         objects: transactions,
       })
 
@@ -71,7 +73,7 @@ export const startRealTimeStreaming = async (whitelistReader: LoaderBuffer) => {
         action: action.name,
         chain: 'eos',
       }))
-      prisma.query.upsert_actions({ objects: actions })
+      hasura.query.upsert_actions({ objects: actions })
     } catch (error) {
       log.fatal(error)
       process.exit(1)
