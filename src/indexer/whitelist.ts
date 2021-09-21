@@ -2,6 +2,7 @@ import {
   EosioReaderActionFilter,
   EosioReaderTableRowFilter,
 } from '@blockmatic/eosio-ship-reader'
+import { db, mappings } from '../lib/prisma'
 import { log } from '../lib/logger'
 
 export interface ChainGraphTableRegistry extends EosioReaderTableRowFilter {
@@ -22,13 +23,9 @@ let _table_rows_whitelist: EosioReaderTableRowFilter[] = []
 let _token_list: Array<string> = []
 
 const get_chaingraph_token_registry = () => _chaingraph_token_registry
-
 const get_chaingraph_table_registry = () => _chaingraph_table_registry
-
 const get_actions_whitelist = () => _actions_whitelist
-
 const get_table_rows_whitelist = () => _table_rows_whitelist
-
 const get_token_list = () => _token_list
 
 export interface WhitelistReader {
@@ -39,40 +36,35 @@ export interface WhitelistReader {
   get_token_list: () => Array<string>
 }
 
-type DataMappingsType = {
-  data: {
-    mappings: Array<any>
-  }
-}
-
-const onData = (data: unknown) => {
+const updateMappings = (contractMappings: mappings[]) => {
   log.info('Updating contract mappings in memory ...')
   try {
-    const {
-      data: { mappings },
-    } = data as DataMappingsType
-
     const table_registry: ChainGraphTableRegistry[] = []
     const token_registry: TokenRegistry[] = []
     const token_list: Array<string> = []
     const table_rows_whitelist: EosioReaderTableRowFilter[] = []
     const actions_registry: EosioReaderActionFilter[] = []
 
-    mappings.forEach((contractInfo) => {
-      const { contract_name } = contractInfo
-      const actions = contractInfo?.mapping?.actions
+    contractMappings.forEach(({ mapping, contract_name }) => {
+      // workaround type issue
+      const mapDef: any = mapping
+
+      // push actions to actions registry
+      const actions = mapDef.actions
       if (actions) {
         actions_registry.push({
           code: contract_name,
           action: actions,
         })
       }
-      const type = contractInfo?.mapping?.type
-      if (type) {
-        token_list.push(contract_name)
-      }
-      contractInfo?.mapping?.table_registry.forEach((registry: any) => {
-        const code = registry.code ?? contract_name
+
+      // push contract name to token list
+      const type = mapDef.type
+      if (type) token_list.push(contract_name)
+
+      // push contract table to tables registry
+      mapDef.table_registry.forEach((registry: any) => {
+        const code = contract_name
         if (type) {
           token_registry.push({
             code,
@@ -95,6 +87,7 @@ const onData = (data: unknown) => {
         })
       })
     })
+    // update memory state[
     ;[
       _chaingraph_table_registry,
       _chaingraph_token_registry,
@@ -113,16 +106,22 @@ const onData = (data: unknown) => {
   }
 }
 
-const onError = (error: unknown) => {
-  log.error('Error updating contract mappings', error)
+let fetchWhitelistInterval
+const subscribe = () => {
+  log.info('Subscribing to contract mappings ...')
+  fetchWhitelistInterval = setInterval(async () => {
+    try {
+      const contactMappings = await db.mappings.findMany()
+      updateMappings(contactMappings)
+    } catch (error) {
+      log.error('Error updating contract mappings', error)
+    }
+  }, 1000)
 }
 
-const subscribe = () =>
-  new Promise((resolve) => getSubscription({ resolve, onData, onError }))
-
 export const initWhiteList = async () => {
-  log.info('Subscribing to contract mappings ...')
-  await subscribe()
+  subscribe()
+
   return {
     get_chaingraph_table_registry,
     get_chaingraph_token_registry,
