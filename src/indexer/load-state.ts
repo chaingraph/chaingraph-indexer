@@ -1,7 +1,7 @@
 import { log } from '../lib/logger'
-import { WhitelistReader } from '../mappings/old'
+import { WhitelistReader } from '../reader/old'
 import { rpc } from '../lib/eosio'
-import { getChainGraphTableRowData } from '../mappings/utils'
+import { getChainGraphTableRowData } from '../reader/utils'
 import omit from 'lodash.omit'
 import { hasura } from '../lib/hasura'
 

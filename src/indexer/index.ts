@@ -1,4 +1,4 @@
-import { initWhiteList } from '../mappings/old'
+import { initWhiteList } from '../reader/old'
 import { startRealTimeStreaming } from './real-time'
 import { loadCurrentTableState } from './load-state'
 import { loadHistory } from './load-history'
