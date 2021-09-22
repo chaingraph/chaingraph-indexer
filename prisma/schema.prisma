@@ -29,12 +29,12 @@ model actions {
 
 model api_users {
   account      String
-  api_key      String     @unique
+  api_key      String       @unique
   domain_names String?
-  id           Int        @id @default(autoincrement())
-  created_at   DateTime?  @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime?  @default(now()) @db.Timestamptz(6)
-  mappings     mappings[]
+  id           Int          @id @default(autoincrement())
+  created_at   DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?    @default(now()) @db.Timestamptz(6)
+  whitelists   whitelists[]
 }
 
 model blocks {
@@ -55,15 +55,6 @@ model chains {
   rpc_endpoint String
   blocks       blocks[]
   table_rows   table_rows[]
-}
-
-model mappings {
-  contract_name String    @id
-  mapping       Json      @default(dbgenerated("jsonb_build_object()"))
-  api_user_id   Int
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime? @default(now()) @db.Timestamptz(6)
-  api_users     api_users @relation(fields: [api_user_id], references: [id], onUpdate: Restrict)
 }
 
 model table_rows {
@@ -89,4 +80,14 @@ model transactions {
   actions         actions[]
 
   @@id([transaction_id, chain])
+}
+
+model whitelists {
+  contract_name String    @id(map: "mappings_pkey")
+  mapping       Json      @default(dbgenerated("jsonb_build_object()"))
+  api_user_id   Int
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @default(now()) @db.Timestamptz(6)
+  contract_type String?
+  api_users     api_users @relation(fields: [api_user_id], references: [id], onUpdate: Restrict, map: "mappings_api_user_id_fkey")
 }

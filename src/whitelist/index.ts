@@ -2,27 +2,15 @@ import {
   EosioReaderActionFilter,
   EosioReaderTableRowFilter,
 } from '@blockmatic/eosio-ship-reader'
-import { db, mappings } from '../lib/prisma'
+import { db } from '../lib/prisma'
 import { log } from '../lib/logger'
-
-export interface ChainGraphTableRegistry extends EosioReaderTableRowFilter {
-  table_key: string
-}
-
-export interface TokenRegistry {
-  code: string
-  table: string
-  table_key: string
-}
 
 // this state keeps updated every .1s through polling
 let _chaingraph_table_registry: ChainGraphTableRegistry[] = []
 let _actions_whitelist: EosioReaderActionFilter[] = []
-let _chaingraph_token_registry: any = []
 let _table_rows_whitelist: EosioReaderTableRowFilter[] = []
 let _token_list: Array<string> = []
 
-const get_chaingraph_token_registry = () => _chaingraph_token_registry
 const get_chaingraph_table_registry = () => _chaingraph_table_registry
 const get_actions_whitelist = () => _actions_whitelist
 const get_table_rows_whitelist = () => _table_rows_whitelist
@@ -30,18 +18,16 @@ const get_token_list = () => _token_list
 
 export interface WhitelistReader {
   get_chaingraph_table_registry: () => ChainGraphTableRegistry[]
-  get_chaingraph_token_registry: () => any
   get_table_rows_whitelist: () => EosioReaderTableRowFilter[]
   get_actions_whitelist: () => EosioReaderActionFilter[]
   get_token_list: () => Array<string>
 }
 
-const updateMappings = (contractMappings: mappings[]) => {
+const updateIndexingMappings = (contractMappings: mappings[]) => {
   log.info('Updating contract mappings in memory ...')
   try {
     const table_registry: ChainGraphTableRegistry[] = []
     const token_registry: TokenRegistry[] = []
-    const token_list: Array<string> = []
     const table_rows_whitelist: EosioReaderTableRowFilter[] = []
     const actions_registry: EosioReaderActionFilter[] = []
 
@@ -106,13 +92,12 @@ const updateMappings = (contractMappings: mappings[]) => {
   }
 }
 
-let fetchWhitelistInterval
 const subscribe = () => {
   log.info('Subscribing to contract mappings ...')
-  fetchWhitelistInterval = setInterval(async () => {
+  setInterval(async () => {
     try {
-      const contactMappings = await db.mappings.findMany()
-      updateMappings(contactMappings)
+      const whitelists = await db.whitelists.findMany()
+      updateIndexingMappings(whitelists)
     } catch (error) {
       log.error('Error updating contract mappings', error)
     }

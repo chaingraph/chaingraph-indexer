@@ -1,5 +1,5 @@
 import * as env from 'env-var'
-import { ReadersConfig } from '../types/config'
+import { ReadersConfig } from './types'
 import { readers } from './readers.config'
 
 export interface Config {

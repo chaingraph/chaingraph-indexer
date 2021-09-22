@@ -1,4 +1,4 @@
-import { WhitelistReader } from './whitelist'
+import { WhitelistReader } from '.'
 import { EosioReaderTableRow } from '@blockmatic/eosio-ship-reader'
 import omit from 'lodash.omit'
 
@@ -39,16 +39,10 @@ export const getPrimaryKey = (
       break
 
     default:
-      if (table_registry.computed_key_type('-asset-symbol')) {
-        primary_key =
-          row.value[
-            table_registry.table_key.replace('-asset-symbol', '')
-          ].split(' ')[1]
-      } else if (table_registry.computed_key_type('symbol')) {
-        primary_key =
-          row.value[table_registry.table_key.replace('symbol', '')].split(
-            ',',
-          )[1]
+      if (table_registry.computed_key_type === 'asset_symbol') {
+        primary_key = row.value[table_registry.table_key].split(' ')[1]
+      } else if (table_registry.computed_key_type === 'symbol') {
+        primary_key = row.value[table_registry.table_key].split(',')[1]
       } else {
         primary_key = row.value[table_registry.table_key]
       }

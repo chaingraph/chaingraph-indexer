@@ -1,5 +1,5 @@
 import { log } from '../lib/logger'
-import { WhitelistReader } from './whitelist'
+import { WhitelistReader } from '../whitelist'
 import { JsonRpc, Action as HyperionAction } from '@eoscafe/hyperion'
 import fetch from 'isomorphic-fetch'
 import { hasura } from '../lib/hasura'
