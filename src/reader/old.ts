@@ -9,7 +9,7 @@ import { log } from '../lib/logger'
 let _chaingraph_table_registry: ChainGraphTableRegistry[] = []
 let _actions_whitelist: EosioReaderActionFilter[] = []
 let _table_rows_whitelist: EosioReaderTableRowFilter[] = []
-let _token_list: Array<string> = []
+const _token_list: Array<string> = []
 
 const get_chaingraph_table_registry = () => _chaingraph_table_registry
 const get_actions_whitelist = () => _actions_whitelist
@@ -74,35 +74,17 @@ const updateIndexingMappings = (contractMappings: mappings[]) => {
       })
     })
     // update memory state[
-    ;[
-      _chaingraph_table_registry,
-      _chaingraph_token_registry,
-      _table_rows_whitelist,
-      _actions_whitelist,
-      _token_list,
-    ] = [
+    ;[_chaingraph_table_registry, _table_rows_whitelist, _actions_whitelist] = [
       table_registry,
-      token_registry,
       table_rows_whitelist,
       actions_registry,
-      token_list,
     ]
   } catch (error) {
     log.error('Error updating contract mappings', error)
   }
 }
 
-const subscribe = () => {
-  log.info('Subscribing to contract mappings ...')
-  setInterval(async () => {
-    try {
-      const whitelists = await db.whitelists.findMany()
-      updateIndexingMappings(whitelists)
-    } catch (error) {
-      log.error('Error updating contract mappings', error)
-    }
-  }, 1000)
-}
+const subscribe = () => {}
 
 export const initWhiteList = async () => {
   subscribe()

@@ -1,4 +1,4 @@
-import { WhitelistReader } from '.'
+import { WhitelistReader } from './old'
 import { EosioReaderTableRow } from '@blockmatic/eosio-ship-reader'
 import omit from 'lodash.omit'
 

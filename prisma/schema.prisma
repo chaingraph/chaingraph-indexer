@@ -29,12 +29,11 @@ model actions {
 
 model api_users {
   account      String
-  api_key      String       @unique
+  api_key      String    @unique
   domain_names String?
-  id           Int          @id @default(autoincrement())
-  created_at   DateTime?    @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime?    @default(now()) @db.Timestamptz(6)
-  whitelists   whitelists[]
+  id           Int       @id @default(autoincrement())
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime? @default(now()) @db.Timestamptz(6)
 }
 
 model blocks {
@@ -82,12 +81,10 @@ model transactions {
   @@id([transaction_id, chain])
 }
 
-model whitelists {
-  contract_name String    @id(map: "mappings_pkey")
-  mapping       Json      @default(dbgenerated("jsonb_build_object()"))
-  api_user_id   Int
+model mappings {
+  contract_name String    @id
+  mappings      Json      @default(dbgenerated("jsonb_build_object()"))
   created_at    DateTime? @default(now()) @db.Timestamptz(6)
   updated_at    DateTime? @default(now()) @db.Timestamptz(6)
   contract_type String?
-  api_users     api_users @relation(fields: [api_user_id], references: [id], onUpdate: Restrict, map: "mappings_api_user_id_fkey")
 }

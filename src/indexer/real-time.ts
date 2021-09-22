@@ -1,8 +1,8 @@
-import { loadReader } from './ship-reader'
-import { WhitelistReader } from '../whitelist'
+import { loadReader } from '../reader/ship-reader'
+import { WhitelistReader } from '../mappings/old'
 import omit from 'lodash.omit'
 import { log } from '../lib/logger'
-import { getChainGraphTableRowData, getPrimaryKey } from '../whitelist/mappings'
+import { getChainGraphTableRowData, getPrimaryKey } from '../mappings/utils'
 import { hasura } from '../lib/hasura'
 
 export const startRealTimeStreaming = async (
