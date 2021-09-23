@@ -1,6 +1,7 @@
 import { Subject } from 'rxjs'
+import fs from 'fs'
+import path from 'path'
 import { log } from '../lib/logger'
-import { db } from '../lib/prisma'
 import { ContractMappings } from './types'
 
 export const createMappingsSubject = () => {
@@ -9,12 +10,16 @@ export const createMappingsSubject = () => {
   log.info('Subscribing to contract mappings, refreshing every 1s ...')
   setInterval(async () => {
     try {
-      const data = await db.mappings.findMany()
+      const mappings: ContractMappings[] = []
+      const jsonsInDir = fs
+        .readdirSync(__dirname)
+        .filter((file) => path.extname(file) === '.json')
 
-      // load json files with proper type
-      const mappings = data.map(
-        (row) => row.mappings as unknown as ContractMappings,
-      )
+      jsonsInDir.forEach((file) => {
+        const fileData = fs.readFileSync(path.join(__dirname, file))
+        // TODO: validate mappings
+        mappings.push(JSON.parse(fileData.toString()) as ContractMappings)
+      })
 
       mappings$.next(mappings)
     } catch (error) {
