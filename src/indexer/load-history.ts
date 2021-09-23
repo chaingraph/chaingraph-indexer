@@ -1,5 +1,4 @@
 import { log } from '../lib/logger'
-import { WhitelistReader } from '../old_stuff/old'
 import { JsonRpc, Action as HyperionAction } from '@eoscafe/hyperion'
 import fetch from 'isomorphic-fetch'
 import { hasura } from '../lib/hasura'
@@ -11,6 +10,7 @@ import {
   Blocks_Insert_Input,
   Transactions_Insert_Input,
 } from '@chaingraph.io/hasura-client'
+import { MappingsReader } from '../mappings'
 
 const endpoint =
   process.env.HYPERION_ENDPOINT || 'https://eos.hyperion.eosrio.io'
@@ -138,16 +138,15 @@ export const loadActionHistory = async (account: string, filter: string) => {
   log.info('Succesfully loaded history from Hyperion!', 'LOL ???')
 }
 
-export const loadHistory = async (whitelistReader: WhitelistReader) => {
+export const loadHistory = async (mappingsReader: MappingsReader) => {
   log.info('Loading action and transaction history ...')
   try {
-    const actions = whitelistReader.get_actions_whitelist()
-
-    await Promise.all(
-      actions.map(async (action) =>
-        loadActionHistory(action.code, action.action),
-      ),
-    )
+    // const actions = mappingsReader.get_actions_whitelist()
+    // await Promise.all(
+    //   actions.map(async (action) =>
+    //     loadActionHistory(action.code, action.action),
+    //   ),
+    // )
   } catch (error) {
     console.error(
       'Error loading actions and transaction data from Hyperion',

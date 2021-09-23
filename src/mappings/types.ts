@@ -3,7 +3,7 @@ export interface ContractMappingsTable {
   table: string
   table_type?: 'singleton' | 'multi_index'
   primary_key: string
-  computed_key_type?: 'asset_symbol' | 'asset'
+  computed_key_type?: 'asset_symbol' | 'symbol'
 }
 
 export interface ContractMappings {

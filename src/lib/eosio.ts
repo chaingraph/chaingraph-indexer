@@ -1,17 +1,20 @@
 import { RpcInterfaces } from 'eosjs'
 import fetch from 'node-fetch'
 import { JsonRpc } from 'eosjs'
+import { config } from '../config'
 
-export const rpc = new JsonRpc(eosioApi, { fetch })
+export const rpc = new JsonRpc(config.reader.rpc_url, { fetch })
 
 export const getInfo = () =>
-  fetch(`${eosioApi}/v1/chain/get_info`).then((res: any) => res.json())
+  fetch(`${config.reader.rpc_url}/v1/chain/get_info`).then((res: any) =>
+    res.json(),
+  )
 
 export const getNationInfo = () =>
   fetch('http://api.eosn.io/v1/chain/get_info').then((res: any) => res.json())
 
 export const fecthAbi = (account_name: string) =>
-  fetch(`${eosioApi}/v1/chain/get_abi`, {
+  fetch(`${config.reader.rpc_url}/v1/chain/get_abi`, {
     method: 'POST',
     body: JSON.stringify({
       account_name,

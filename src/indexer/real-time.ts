@@ -1,7 +1,7 @@
 import { loadReader } from '../reader/ship-reader'
 import omit from 'lodash.omit'
 import { log } from '../lib/logger'
-import { getChainGraphTableRowData, getPrimaryKey } from '../old_stuff/utils'
+import { getChainGraphTableRowData, getPrimaryKey } from './utils'
 import { hasura } from '../lib/hasura'
 import { MappingsReader } from '../mappings'
 
@@ -23,7 +23,7 @@ export const startRealTimeStreaming = async (
       // insert table_rows
       const insertTableRowsObjects = block.table_rows
         .filter((row) => row.present)
-        .map((row) => getChainGraphTableRowData(row, whitelistReader))
+        .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
       hasura.query.upsert_table_rows({ objects: insertTableRowsObjects })
 
@@ -42,7 +42,7 @@ export const startRealTimeStreaming = async (
               _eq: row.table,
             },
             primary_key: {
-              _eq: getPrimaryKey(row, whitelistReader),
+              _eq: getPrimaryKey(row, mappingsReader),
             },
           }
         })
