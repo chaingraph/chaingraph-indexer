@@ -1,47 +1,28 @@
 import {
   createEosioShipReader,
-  EosioReaderAbisMap,
   EosioReaderConfig,
 } from '@blockmatic/eosio-ship-reader'
-import fetch from 'node-fetch'
-import { eosioApi, eosioHost, fecthAbi } from '../lib/eosio'
-import { WhitelistReader } from './old'
+import { config } from '../config'
+import { getInfo } from '../lib/eosio'
+import { MappingsReader } from '../mappings'
+import { createShipReaderDataHelper } from './reader-helper'
 
-export const loadReader = async (whitelistReader: WhitelistReader) => {
-  const info = await fetch(`${eosioApi}/v1/chain/get_info`).then((res: any) =>
-    res.json(),
-  )
+export const loadReader = async (mappingsReader: MappingsReader) => {
+  // First we need to get the ABis for all whitelisted contracts
+  const readerHelper = await createShipReaderDataHelper(mappingsReader)
 
-  const uniqueContractNames = [
-    ...new Set(
-      whitelistReader.get_table_rows_whitelist().map((row: any) => row.code),
-    ),
-  ]
-  const abisArr = await Promise.all(
-    uniqueContractNames.map((account_name) => fecthAbi(account_name)),
-  )
-
-  const contract_abis: () => EosioReaderAbisMap = () => {
-    const abis = new Map()
-    abisArr.forEach(({ account_name, abi }) => abis.set(account_name, abi))
-    return abis
-  }
+  const readerConfig = config.reader
+  const start_block_num =
+    readerConfig.start_block || (await getInfo()).head_block_num
 
   const eosioReaderConfig: EosioReaderConfig = {
-    ws_url: `ws://${eosioHost}:8080`,
-    rpc_url: eosioApi,
-    ds_threads: 6,
-    ds_experimental: false,
-    delta_whitelist: () => [
-      'contract_table',
-      'contract_row',
-      'contract_index64',
-    ],
-    table_rows_whitelist: whitelistReader.get_table_rows_whitelist,
-    actions_whitelist: whitelistReader.get_actions_whitelist,
-    contract_abis,
+    ws_url: readerConfig.ws_url,
+    rpc_url: readerConfig.rpc_url,
+    ds_threads: readerConfig.ds_threads,
+    ds_experimental: readerConfig.ds_experimental,
+    ...readerHelper,
     request: {
-      start_block_num: info.head_block_num + 10,
+      start_block_num,
       end_block_num: 0xffffffff,
       max_messages_in_flight: 50,
       have_positions: [],

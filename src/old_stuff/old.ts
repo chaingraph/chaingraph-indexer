@@ -9,18 +9,15 @@ import { log } from '../lib/logger'
 let _chaingraph_table_registry: ChainGraphTableRegistry[] = []
 let _actions_whitelist: EosioReaderActionFilter[] = []
 let _table_rows_whitelist: EosioReaderTableRowFilter[] = []
-const _token_list: Array<string> = []
 
 const get_chaingraph_table_registry = () => _chaingraph_table_registry
 const get_actions_whitelist = () => _actions_whitelist
 const get_table_rows_whitelist = () => _table_rows_whitelist
-const get_token_list = () => _token_list
 
 export interface WhitelistReader {
   get_chaingraph_table_registry: () => ChainGraphTableRegistry[]
   get_table_rows_whitelist: () => EosioReaderTableRowFilter[]
   get_actions_whitelist: () => EosioReaderActionFilter[]
-  get_token_list: () => Array<string>
 }
 
 const updateIndexingMappings = (contractMappings: mappings[]) => {

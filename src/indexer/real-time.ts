@@ -1,16 +1,16 @@
 import { loadReader } from '../reader/ship-reader'
-import { WhitelistReader } from '../reader/old'
 import omit from 'lodash.omit'
 import { log } from '../lib/logger'
-import { getChainGraphTableRowData, getPrimaryKey } from '../reader/utils'
+import { getChainGraphTableRowData, getPrimaryKey } from '../old_stuff/utils'
 import { hasura } from '../lib/hasura'
+import { MappingsReader } from '../mappings'
 
 export const startRealTimeStreaming = async (
-  whitelistReader: WhitelistReader,
+  mappingsReader: MappingsReader,
 ) => {
   log.info('Starting realtime indexing from eosio ship ...')
 
-  const { close$, blocks$, errors$ } = await loadReader(whitelistReader)
+  const { close$, blocks$, errors$ } = await loadReader(mappingsReader)
 
   // we subscribe to eosio ship reader whitelisted block stream and insert the data in postgres thru prisma
   // this stream contains only the blocks that are relevant to the whitelisted contract tables and actions
