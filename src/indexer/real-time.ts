@@ -62,18 +62,24 @@ export const startRealTimeStreaming = async (
         chain: 'eos',
         block_num: block.block_num,
       }))
-      await hasura.query.upsert_transactions({
-        objects: transactions,
-      })
 
-      // insert action traces
-      const actions = block.actions.map((action) => ({
-        ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
-        contract: action.account,
-        action: action.name,
-        chain: 'eos',
-      }))
-      hasura.query.upsert_actions({ objects: actions })
+      // if there are transactions index them along with the actions
+      if (transactions.length > 0) {
+        await hasura.query.upsert_transactions({
+          objects: transactions,
+        })
+
+        // insert action traces
+        const actions = block.actions.map((action) => ({
+          ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
+          contract: action.account,
+          action: action.name,
+          chain: 'eos',
+        }))
+        if (actions.length > 0) {
+          hasura.query.upsert_actions({ objects: actions })
+        }
+      }
     } catch (error) {
       log.fatal(error)
       process.exit(1)

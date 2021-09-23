@@ -89,6 +89,7 @@ model mappings {
   contract_type String?
   chain         String
   actions       String?
+  abi           Json?
 
   @@id([chain, contract])
 }
