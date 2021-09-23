@@ -82,9 +82,12 @@ model transactions {
 }
 
 model mappings {
-  contract_name String    @id
+  contract      String
   mappings      Json      @default(dbgenerated("jsonb_build_object()"))
   created_at    DateTime? @default(now()) @db.Timestamptz(6)
   updated_at    DateTime? @default(now()) @db.Timestamptz(6)
   contract_type String?
+  chain         String
+
+  @@id([chain, contract])
 }
