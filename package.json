@@ -10,10 +10,7 @@
     "dev": "env-cmd ts-node-dev --no-notify --no-deps --respawn src/index",
     "build": "tsc -b",
     "lint": "eslint --ignore-path .gitignore \"**/*.+(js|ts|tsx)\"",
-    "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|json|ts|tsx)\"",
-    "seed": "hasura seeds apply --project src/hasura ",
-    "gen": "rimraf src/generated && graphql-codegen --config codegen.yml -r dotenv/config",
-    "doctoc": "doctoc ./README.md --github"
+    "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|json|ts|tsx)\""
   },
   "lint-staged": {
     "*.{ts,tsx,js}": [
@@ -38,14 +35,11 @@
     "@types/text-encoding": "^0.0.36",
     "@types/ws": "^7.4.7",
     "cpy-cli": "^3.1.1",
-    "doctoc": "^2.0.1",
     "env-cmd": "^10.1.0",
     "eslint": "7",
-    "hasura-cli": "^2.0.8",
     "husky": "^7.0.2",
     "lint-staged": "^11.1.2",
     "prettier": "^2.4.1",
-    "prisma": "3.0.2",
     "rimraf": "^3.0.2",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.4.3"
@@ -57,7 +51,6 @@
     "@eoscafe/hyperion": "^3.2.9",
     "@eosrio/node-abieos": "^2.1.1",
     "@greymass/eosio": "^0.5.0",
-    "@prisma/client": "3.0.2",
     "bluebird": "^3.7.2",
     "env-cmd": "^10.1.0",
     "env-var": "^7.0.1",

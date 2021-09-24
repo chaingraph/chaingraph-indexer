@@ -1,7 +1,8 @@
 import { Subject } from 'rxjs'
 import { log } from '../lib/logger'
-import { db } from '../lib/prisma'
+import { db } from '../lib/db'
 import { ContractMappings } from './types'
+import { config } from '@blockmatic/eosio-ship-reader'
 
 export interface MappingsReader {
   mappings$: Subject<ContractMappings[]>
@@ -15,13 +16,15 @@ export const createMappingsReader = () => {
   log.info('Subscribing to contract mappings, refreshing every 1s ...')
   setInterval(async () => {
     try {
-      const result = await db.mappings.findMany()
+      const result: ContractMappings[] = await db.query(
+        'SELECT * FROM mappings',
+      )
       // type hackerish
-      const freshMappings = result as unknown as ContractMappings[]
       // update and broadcast if there's new data
-      if (JSON.stringify(freshMappings) !== JSON.stringify(mappings)) {
-        mappings = freshMappings
+      if (JSON.stringify(result) !== JSON.stringify(mappings)) {
+        mappings = result
         mappings$.next(mappings)
+        // log.info('New mappings', JSON.stringify(mappings))
       }
     } catch (error) {
       log.error('Error updating contract mappings', error)
