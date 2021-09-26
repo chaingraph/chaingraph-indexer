@@ -18,7 +18,7 @@ export * from '../types'
 
 const runQuery = async (query: string) => {
   logger.info(query)
-  return db.many(query)
+  return db.none(query)
 }
 
 export const upsertBlocks = async (blocks: ChainGraphBlock[]) =>

@@ -30,11 +30,11 @@ export const startRealTimeStreaming = async (
       )
 
       // insert table_rows
-      const insertTableRowsObjects = block.table_rows
-        .filter((row) => row.present)
-        .map((row) => getChainGraphTableRowData(row, mappingsReader))
+      // const insertTableRowsObjects = block.table_rows
+      //   .filter((row) => row.present)
+      //   .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
-      upsertTableRows(insertTableRowsObjects)
+      // upsertTableRows(insertTableRowsObjects)
 
       // delete table_rows
       // const deletedTableRows = block.table_rows
@@ -50,27 +50,27 @@ export const startRealTimeStreaming = async (
         },
       ])
 
-      // insert transaction data
-      const transactions = block.transactions.map((trx) => ({
-        ...trx,
-        chain: 'eos',
-        block_num: block.block_num,
-      }))
+      // // insert transaction data
+      // const transactions = block.transactions.map((trx) => ({
+      //   ...trx,
+      //   chain: 'eos',
+      //   block_num: block.block_num,
+      // }))
 
-      // if there are transactions index them along with the actions
-      if (transactions.length > 0) {
-        await upsertTransactions(transactions)
+      // // if there are transactions index them along with the actions
+      // if (transactions.length > 0) {
+      //   await upsertTransactions(transactions)
 
-        // insert action traces
-        const actions: ChainGraphAction[] = block.actions.map((action) => ({
-          ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
-          contract: action.account,
-          action: action.name,
-          chain: 'eos',
-          receiver: '',
-        }))
-        if (actions.length > 0) await upsertActions(actions)
-      }
+      //   // insert action traces
+      //   const actions: ChainGraphAction[] = block.actions.map((action) => ({
+      //     ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
+      //     contract: action.account,
+      //     action: action.name,
+      //     chain: 'eos',
+      //     receiver: '',
+      //   }))
+      //   if (actions.length > 0) await upsertActions(actions)
+      // }
     } catch (error) {
       logger.fatal(error)
       process.exit(1)
