@@ -1,6 +1,6 @@
 import { Logger } from 'tslog'
 
-export const log: Logger = new Logger({
+export const logger: Logger = new Logger({
   displayDateTime: false,
   displayFilePath: 'hidden',
   displayFunctionName: false,

@@ -1,12 +1,11 @@
-import { log } from '../lib/logger'
+import { logger } from '../lib/logger'
 import { rpc } from '../lib/eosio'
 import { getChainGraphTableRowData } from './utils'
 import omit from 'lodash.omit'
-import { hasura } from '../lib/hasura'
 import { MappingsReader } from '../mappings'
 
 export const loadCurrentTableState = async (mappingReader: MappingsReader) => {
-  log.info('Loading current table state ...')
+  logger.info('Loading current table state ...')
 
   // get the contract registry
   // const registry = mappingReader.get_chaingraph_table_registry()
@@ -62,7 +61,7 @@ export const loadCurrentTableState = async (mappingReader: MappingsReader) => {
   //   // upsert all table rows on the database
   //   await hasura.query.upsert_table_rows({ objects: allRows })
 
-  //   log.info(
+  //   logger.info(
   //     `State for ${JSON.stringify(
   //       omit(entry, 'table_key'),
   //     )} succesfully loaded!`,

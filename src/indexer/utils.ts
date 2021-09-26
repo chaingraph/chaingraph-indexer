@@ -1,11 +1,12 @@
 import { EosioReaderTableRow } from '@blockmatic/eosio-ship-reader'
 import omit from 'lodash.omit'
 import { MappingsReader } from '../mappings'
+import { ChainGraphTableRow } from '../types'
 
 export const getPrimaryKey = (
   row: EosioReaderTableRow,
-  mappingsReader: MappingsReader,
-) => {
+  mappingsReader: MappingsReader
+): string => {
   // find table mappings
   const tableMappings = mappingsReader.mappings
     .find((m) => m.contract === row.code)
@@ -26,13 +27,13 @@ export const getPrimaryKey = (
     primary_key = row.value[tableMappings.primary_key]
   }
 
-  return primary_key
+  return '' + primary_key
 }
 
 export const getChainGraphTableRowData = (
   row: EosioReaderTableRow,
-  mappingsReader: MappingsReader,
-) => {
+  mappingsReader: MappingsReader
+): ChainGraphTableRow => {
   return {
     primary_key: getPrimaryKey(row, mappingsReader).toString(),
     ...omit(row, 'value', 'code', 'present', 'primary_key'),

@@ -34,7 +34,6 @@
     "@types/node": "^16.9.4",
     "@types/text-encoding": "^0.0.36",
     "@types/ws": "^7.4.7",
-    "cpy-cli": "^3.1.1",
     "env-cmd": "^10.1.0",
     "eslint": "7",
     "husky": "^7.0.2",
@@ -56,7 +55,6 @@
     "env-var": "^7.0.1",
     "eos-common": "^0.8.1",
     "eosjs": "^22.1.0",
-    "eosjs-account-name": "^2.2.1",
     "graphql": "^15.6.0",
     "graphql-request": "3.5.0",
     "hasura-cli": "^2.0.8",
@@ -72,7 +70,6 @@
     "rxjs": "^7.3.0",
     "text-encoding": "^0.7.0",
     "tslog": "^3.2.2",
-    "winston": "^3.3.3",
     "ws": "^8.2.2"
   }
 }

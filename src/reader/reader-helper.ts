@@ -6,13 +6,13 @@ import {
 } from '@blockmatic/eosio-ship-reader'
 import { fecthAbi } from '../lib/eosio'
 import { MappingsReader } from '../mappings'
-import { ContractMappings } from '../mappings/types'
+import { ChainGraphMappings } from '../types'
 
 // eosio-ship-reader expects callback functions for retrieving filtering whitelists
 // this pattern allow us to update the whitelist without stopping the reader
 // this helper subscribes to the contract mappings subject and load abis in memory for ship reader to consume
 export const createShipReaderDataHelper = async (
-  mappingsReader: MappingsReader,
+  mappingsReader: MappingsReader
 ) => {
   // in memory fitlers
   let tableRowsFilters: EosioReaderTableRowFilter[] = []
@@ -20,15 +20,16 @@ export const createShipReaderDataHelper = async (
 
   // ship filter have a different format than ChainGraph mappings
   // this function massages the data for eosio-ship-reader to consume
-  const updateShipFilters = (mappings: ContractMappings[]) => {
+  const updateShipFilters = (mappings: ChainGraphMappings[]) => {
     actionsFilters = mappings
       .map(({ contract, actions }) => {
         const code = contract
         if (actions === '*') return [{ code, action: '*' }]
-        return actions.map((action) => ({
-          code,
-          action,
-        }))
+        if (Array.isArray(actions))
+          return actions.map((action) => ({
+            code,
+            action,
+          }))
       })
       .flat()
 

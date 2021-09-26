@@ -1,16 +1,18 @@
-import { log } from '../lib/logger'
+import { logger } from '../lib/logger'
 import { JsonRpc, Action as HyperionAction } from '@eoscafe/hyperion'
 import fetch from 'isomorphic-fetch'
-import { hasura } from '../lib/hasura'
 import uniqBy from 'lodash.uniqby'
 import pThrottle from 'p-throttle'
 import { whilst } from '../lib/promises'
-import {
-  Actions_Insert_Input,
-  Blocks_Insert_Input,
-  Transactions_Insert_Input,
-} from '@chaingraph.io/hasura-client'
 import { MappingsReader } from '../mappings'
+import {
+  ChainGraphAction,
+  ChainGraphBlock,
+  ChainGraphTransaction,
+  upsertActions,
+  upsertBlocks,
+  upsertTransactions,
+} from '../database'
 
 const endpoint =
   process.env.HYPERION_ENDPOINT || 'https://eos.hyperion.eosrio.io'
@@ -18,12 +20,12 @@ const rpc = new JsonRpc(endpoint, { fetch })
 const PAGE_SIZE = 1000 // parseInt(process.env.MAX_ACTIONS_LIMIT || '1000')
 
 const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
-  log.info(`Loading ${hyperion_actions.length} hyperion actions ...`)
+  logger.info(`Loading ${hyperion_actions.length} hyperion actions ...`)
   try {
     type UpsertObjects = {
-      actions: Actions_Insert_Input[]
-      transactions: Transactions_Insert_Input[]
-      blocks: Blocks_Insert_Input[]
+      actions: ChainGraphAction[]
+      transactions: ChainGraphTransaction[]
+      blocks: ChainGraphBlock[]
     }
 
     const objects: UpsertObjects = hyperion_actions.reduce(
@@ -37,12 +39,18 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
           authorization: action.act.authorization,
           global_sequence: action.global_sequence.toString(),
           action_ordinal: action.action_ordinal,
-          creator_action_ordinal: action.creator_action_ordinal,
+          account_ram_deltas: '',
+          receipt: {},
+          context_free: false,
+          account_disk_deltas: '',
+          console: '',
+          receiver: '',
         })
 
         accumulator.blocks.push({
           chain: 'eos',
           block_num: action.block_num,
+          block_id: action.block_id,
           producer: action.producer,
           timestamp: action.timestamp,
         })
@@ -51,6 +59,9 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
           chain: 'eos',
           block_num: action.block_num,
           transaction_id: action.trx_id,
+          cpu_usage_us: 0,
+          net_usage_words: 0,
+          net_usage: 0,
         })
 
         return {
@@ -59,30 +70,20 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
           transactions: uniqBy(accumulator.transactions, 'transaction_id'),
         }
       },
-      { actions: [], transactions: [], blocks: [] },
+      { actions: [], transactions: [], blocks: [] }
     )
 
-    const loaded_blocks = await hasura.query.upsert_blocks({
-      objects: objects.blocks,
-    })
-    // log.info('loaded_blocks', JSON.stringify(loaded_blocks))
+    await upsertBlocks(objects.blocks)
 
-    const loaded_transactions = await hasura.query.upsert_transactions({
-      objects: objects.transactions,
-    })
-    // log.info('loaded_transactions', JSON.stringify(loaded_transactions))
+    await upsertTransactions(objects.transactions)
 
-    const loaded_actions = await hasura.query.upsert_actions({
-      objects: objects.actions,
-    })
-    // log.info('loaded_actions', JSON.stringify(loaded_actions))
-
+    await upsertActions(objects.actions)
     return true
   } catch (error) {
-    log.error(
+    logger.error(
       'ERRROOOR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',
       Object.keys(error.response),
-      error.response.errors,
+      error.response.errors
     )
     // throw error
     return true // ignore the error for now - Gabo
@@ -101,8 +102,8 @@ export const loadActionHistory = async (account: string, filter: string) => {
   const hasMorePages = () => morePages
   const throttledHyperionGetActions = throttleRequest((page: number) => {
     const secDiff = ((Date.now() - now) / 1000).toFixed()
-    log.info(
-      `===> throttledHyperionGetActions for ${account}:${filter} with a ${secDiff} difference from starting time`,
+    logger.info(
+      `===> throttledHyperionGetActions for ${account}:${filter} with a ${secDiff} difference from starting time`
     )
     return rpc.get_actions(account, {
       filter: `${account}:${filter}`,
@@ -115,7 +116,7 @@ export const loadActionHistory = async (account: string, filter: string) => {
     const filter_page = `filter: ${account}:${filter}, limit: ${PAGE_SIZE}, skip: ${
       PAGE_SIZE * page
     }, page ${page}`
-    log.info(`Loading action history from Hyperion for ${filter_page}`)
+    logger.info(`Loading action history from Hyperion for ${filter_page}`)
 
     try {
       const response = await throttledHyperionGetActions(page)
@@ -124,22 +125,22 @@ export const loadActionHistory = async (account: string, filter: string) => {
         page++
         return true
       }
-      log.info(`BAZINGA STOP. setting morePages to false for ${filter_page}`)
+      logger.info(`BAZINGA STOP. setting morePages to false for ${filter_page}`)
       morePages = false
       return false
     } catch (error) {
-      log.info('hyperion request failed')
+      logger.info('hyperion request failed')
       return true // keep trying
     }
   }
 
   await whilst(hasMorePages, loadHyperionPages)
 
-  log.info('Succesfully loaded history from Hyperion!', 'LOL ???')
+  logger.info('Succesfully loaded history from Hyperion!', 'LOL ???')
 }
 
 export const loadHistory = async (mappingsReader: MappingsReader) => {
-  log.info('Loading action and transaction history ...')
+  logger.info('Loading action and transaction history ...')
   try {
     // const actions = mappingsReader.get_actions_whitelist()
     // await Promise.all(
@@ -150,7 +151,7 @@ export const loadHistory = async (mappingsReader: MappingsReader) => {
   } catch (error) {
     console.error(
       'Error loading actions and transaction data from Hyperion',
-      error,
+      error
     )
   }
 }

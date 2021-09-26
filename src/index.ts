@@ -1,6 +1,6 @@
-import { log } from './lib/logger'
+import { logger } from './lib/logger'
 import { startIndexer } from './indexer'
 
-log.info('Chaingraph is loading up ...')
+logger.info('Chaingraph is loading up ...')
 
 startIndexer()
