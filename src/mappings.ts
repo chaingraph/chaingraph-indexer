@@ -1,6 +1,7 @@
 import { Subject } from 'rxjs'
 import { logger } from './lib/logger'
-import { db, ChainGraphMappings } from './database'
+import { db } from './database'
+import { ChainGraphMappings } from './types'
 
 export interface MappingsReader {
   mappings$: Subject<ChainGraphMappings[]>
@@ -15,7 +16,7 @@ export const createMappingsReader = () => {
   setInterval(async () => {
     try {
       const result: ChainGraphMappings[] = await db.query(
-        'SELECT * FROM mappings'
+        'SELECT * FROM mappings',
       )
       // type hackerish
       // update and broadcast if there's new data

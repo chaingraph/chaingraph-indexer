@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger'
 import { db } from './db'
 import {
+  createDeleteTableRowsQuery,
   createUpsertActionsQuery,
   createUpsertBlocksQuery,
   createUpsertTableRowsQuery,
@@ -14,7 +15,6 @@ import {
 } from '../types'
 
 export * from './db'
-export * from '../types'
 
 const runQuery = async (query: string) => {
   logger.info(query)
@@ -28,10 +28,10 @@ export const upsertTableRows = async (tableRows: ChainGraphTableRow[]) =>
   runQuery(createUpsertTableRowsQuery(tableRows))
 
 export const deleteTableRows = async (tableRows: ChainGraphTableRow[]) =>
-  logger.info(tableRows)
+  runQuery(createDeleteTableRowsQuery(tableRows))
 
 export const upsertTransactions = async (
-  transactions: ChainGraphTransaction[]
+  transactions: ChainGraphTransaction[],
 ) => runQuery(createUpsertTransactionsQuery(transactions))
 
 export const upsertActions = async (actions: ChainGraphAction[]) =>

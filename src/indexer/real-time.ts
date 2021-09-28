@@ -1,21 +1,12 @@
 import { loadReader } from '../reader/ship-reader'
 import omit from 'lodash.omit'
 import { logger } from '../lib/logger'
-import { getChainGraphTableRowData, getPrimaryKey } from './utils'
+import { getChainGraphTableRowData } from './utils'
 import { MappingsReader } from '../mappings'
-import {
-  ChainGraphAction,
-  ChainGraphBlock,
-  ChainGraphTransaction,
-  deleteTableRows,
-  upsertActions,
-  upsertBlocks,
-  upsertTableRows,
-  upsertTransactions,
-} from '../database'
+import { deleteTableRows, upsertBlocks, upsertTableRows } from '../database'
 
 export const startRealTimeStreaming = async (
-  mappingsReader: MappingsReader
+  mappingsReader: MappingsReader,
 ) => {
   logger.info('Starting realtime indexing from eosio ship ...')
 
@@ -26,21 +17,22 @@ export const startRealTimeStreaming = async (
   blocks$.subscribe(async (block) => {
     try {
       logger.info(
-        `Processed block ${block.block_num}. Transactions: ${block.transactions.length}, actions ${block.actions.length}, table rows ${block.table_rows.length} `
+        `Processed block ${block.block_num}. Transactions: ${block.transactions.length}, actions ${block.actions.length}, table rows ${block.table_rows.length} `,
       )
 
       // insert table_rows
-      // const insertTableRowsObjects = block.table_rows
-      //   .filter((row) => row.present)
-      //   .map((row) => getChainGraphTableRowData(row, mappingsReader))
+      const tableRowsDeltas = block.table_rows
+        .filter((row) => row.present)
+        .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
-      // upsertTableRows(insertTableRowsObjects)
+      upsertTableRows(tableRowsDeltas)
 
       // delete table_rows
-      // const deletedTableRows = block.table_rows
-      //   .filter((row) => !row.present)
+      const deletedTableRows = block.table_rows
+        .filter((row) => !row.present)
+        .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
-      // deleteTableRows(deletedTableRows)
+      deleteTableRows(deletedTableRows)
 
       // insert block data
       await upsertBlocks([

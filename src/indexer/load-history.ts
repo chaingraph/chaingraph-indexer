@@ -5,14 +5,12 @@ import uniqBy from 'lodash.uniqby'
 import pThrottle from 'p-throttle'
 import { whilst } from '../lib/promises'
 import { MappingsReader } from '../mappings'
+import { upsertActions, upsertBlocks, upsertTransactions } from '../database'
 import {
   ChainGraphAction,
   ChainGraphBlock,
   ChainGraphTransaction,
-  upsertActions,
-  upsertBlocks,
-  upsertTransactions,
-} from '../database'
+} from '../types'
 
 const endpoint =
   process.env.HYPERION_ENDPOINT || 'https://eos.hyperion.eosrio.io'
@@ -70,7 +68,7 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
           transactions: uniqBy(accumulator.transactions, 'transaction_id'),
         }
       },
-      { actions: [], transactions: [], blocks: [] }
+      { actions: [], transactions: [], blocks: [] },
     )
 
     await upsertBlocks(objects.blocks)
@@ -83,7 +81,7 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
     logger.error(
       'ERRROOOR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',
       Object.keys(error.response),
-      error.response.errors
+      error.response.errors,
     )
     // throw error
     return true // ignore the error for now - Gabo
@@ -103,7 +101,7 @@ export const loadActionHistory = async (account: string, filter: string) => {
   const throttledHyperionGetActions = throttleRequest((page: number) => {
     const secDiff = ((Date.now() - now) / 1000).toFixed()
     logger.info(
-      `===> throttledHyperionGetActions for ${account}:${filter} with a ${secDiff} difference from starting time`
+      `===> throttledHyperionGetActions for ${account}:${filter} with a ${secDiff} difference from starting time`,
     )
     return rpc.get_actions(account, {
       filter: `${account}:${filter}`,
@@ -151,7 +149,7 @@ export const loadHistory = async (mappingsReader: MappingsReader) => {
   } catch (error) {
     console.error(
       'Error loading actions and transaction data from Hyperion',
-      error
+      error,
     )
   }
 }

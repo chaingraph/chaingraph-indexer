@@ -61,21 +61,35 @@ export interface ChainGraphBlock {
   producer: string
 }
 
-export interface ChainGraphMappings {
-  contract: string
-  tables: ChainGraphTableMappings[] | null
-  created_at: string | null
-  updated_at: string | null
-  contract_type: string | null
-  chain: string
-  actions: string | null
-  abi: JSONValue | null
-}
-
 export interface ChainGraphTableMappings {
   scopes?: string[]
   table: string
   table_type?: 'singleton' | 'multi_index'
   primary_key: string
   computed_key_type?: 'asset_symbol' | 'symbol'
+}
+
+export interface ChainGraphMappings {
+  chain: string
+  contract: string
+  contract_type: string | null
+  tables: ChainGraphTableMappings[] | null
+  abi: JSONValue | null
+}
+
+export interface ChainGraphContractWhitelist {
+  chain: string
+  contract: string
+  start_block: number
+  actions?: JSONValue | null
+  tables?: JSONValue | null
+  app_id: string
+}
+
+export interface ChainGraphAppManifest {
+  app_name: string
+  app_id: string
+  description: string
+  url: string
+  whitelist: ChainGraphContractWhitelist[]
 }
