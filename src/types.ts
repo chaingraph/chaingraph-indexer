@@ -74,15 +74,25 @@ export interface ChainGraphMappings {
   contract: string
   contract_type: string | null
   tables: ChainGraphTableMappings[] | null
-  abi: JSONValue | null
+  abi?: JSONValue | null
+}
+
+export interface ChainGraphActionWhitelist {
+  action: string
+  where?: JSONValue[] | null
+}
+
+export interface ChainGraphTableWhitelist {
+  table: string
+  scopes?: string[] | null
 }
 
 export interface ChainGraphContractWhitelist {
   chain: string
   contract: string
   start_block: number
-  actions?: JSONValue | null
-  tables?: JSONValue | null
+  actions?: ChainGraphActionWhitelist[] | null
+  tables?: ChainGraphTableWhitelist[] | null
   app_id: string
 }
 

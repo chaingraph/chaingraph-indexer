@@ -3,14 +3,21 @@ import omit from 'lodash.omit'
 import { logger } from '../lib/logger'
 import { getChainGraphTableRowData } from './utils'
 import { MappingsReader } from '../mappings'
-import { deleteTableRows, upsertBlocks, upsertTableRows } from '../database'
+import {
+  deleteTableRows,
+  upsertActions,
+  upsertBlocks,
+  upsertTableRows,
+  upsertTransactions,
+} from '../database'
+import { ChainGraphAction } from '../types'
 
 export const startRealTimeStreaming = async (
   mappingsReader: MappingsReader,
 ) => {
   logger.info('Starting realtime indexing from eosio ship ...')
 
-  const { close$, blocks$, errors$ } = await loadReader(mappingsReader)
+  const { close$, blocks$, errors$ } = await loadReader()
 
   // we subscribe to eosio ship reader whitelisted block stream and insert the data in postgres thru prisma
   // this stream contains only the blocks that are relevant to the whitelisted contract tables and actions
@@ -42,27 +49,27 @@ export const startRealTimeStreaming = async (
         },
       ])
 
-      // // insert transaction data
-      // const transactions = block.transactions.map((trx) => ({
-      //   ...trx,
-      //   chain: 'eos',
-      //   block_num: block.block_num,
-      // }))
+      // insert transaction data
+      const transactions = block.transactions.map((trx) => ({
+        ...trx,
+        chain: 'eos',
+        block_num: block.block_num,
+      }))
 
-      // // if there are transactions index them along with the actions
-      // if (transactions.length > 0) {
-      //   await upsertTransactions(transactions)
+      // if there are transactions index them along with the actions
+      if (transactions.length > 0) {
+        await upsertTransactions(transactions)
 
-      //   // insert action traces
-      //   const actions: ChainGraphAction[] = block.actions.map((action) => ({
-      //     ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
-      //     contract: action.account,
-      //     action: action.name,
-      //     chain: 'eos',
-      //     receiver: '',
-      //   }))
-      //   if (actions.length > 0) await upsertActions(actions)
-      // }
+        // insert action traces
+        const actions: ChainGraphAction[] = block.actions.map((action) => ({
+          ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
+          contract: action.account,
+          action: action.name,
+          chain: 'eos',
+          receiver: '',
+        }))
+        if (actions.length > 0) await upsertActions(actions)
+      }
     } catch (error) {
       logger.fatal(error)
       process.exit(1)
