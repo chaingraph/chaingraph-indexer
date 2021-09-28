@@ -54,7 +54,7 @@ export const blocksColumnSet = new pgp.helpers.ColumnSet(
 
 export const createUpsertBlocksQuery = (blocks: ChainGraphBlock[]) =>
   pgp.helpers.insert(blocks, blocksColumnSet) +
-  ' ON CONFLICT ON CONSTRAINT blocks_pkey DO UPDATE SET block_id=EXCLUDED.block_id, timestamp=EXCLUDED.timestamp producer=EXCLUDED.producer;'
+  ' ON CONFLICT ON CONSTRAINT blocks_pkey DO UPDATE SET block_id=EXCLUDED.block_id, timestamp=EXCLUDED.timestamp, producer=EXCLUDED.producer;'
 
 // Actions
 export const actionsColumnSet = new pgp.helpers.ColumnSet(

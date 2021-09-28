@@ -2,6 +2,7 @@ import { Subject } from 'rxjs'
 import { logger } from './lib/logger'
 import { db } from './database'
 import { ChainGraphContractWhitelist } from './types'
+import { config } from './config'
 
 export interface whitelistReader {
   whitelist$: Subject<ChainGraphContractWhitelist[]>
@@ -16,7 +17,8 @@ export const createWhitelistReader = () => {
   setInterval(async () => {
     try {
       const result: ChainGraphContractWhitelist[] = await db.query(
-        'SELECT * FROM whitelists',
+        'SELECT * FROM whitelists WHERE chain = $1',
+        [config.reader.chain],
       )
       // update and broadcast if there's new data
       if (JSON.stringify(result) !== JSON.stringify(whitelist)) {

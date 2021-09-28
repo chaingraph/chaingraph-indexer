@@ -87,12 +87,13 @@ export interface ChainGraphTableWhitelist {
   scopes?: string[] | null
 }
 
+export type WildCard = ['*']
 export interface ChainGraphContractWhitelist {
   chain: string
   contract: string
   start_block: number
-  actions?: ChainGraphActionWhitelist[] | null
-  tables?: ChainGraphTableWhitelist[] | null
+  actions?: ChainGraphActionWhitelist[] | WildCard | null
+  tables?: ChainGraphTableWhitelist[] | WildCard | null
   app_id: string
 }
 

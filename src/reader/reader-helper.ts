@@ -5,13 +5,20 @@ import {
   ShipTableDeltaName,
 } from '@blockmatic/eosio-ship-reader'
 import { fecthAbi } from '../lib/eosio'
-import { ChainGraphContractWhitelist } from '../types'
+import { MappingsReader } from '../mappings'
+import {
+  ChainGraphActionWhitelist,
+  ChainGraphContractWhitelist,
+  ChainGraphTableWhitelist,
+} from '../types'
 import { createWhitelistReader } from '../whitelist'
 
 // eosio-ship-reader expects callback functions for retrieving filtering whitelists
 // this pattern allow us to update the whitelist without stopping the reader
 // this helper subscribes to the contract mappings subject and load abis in memory for ship reader to consume
-export const createShipReaderDataHelper = async () => {
+export const createShipReaderDataHelper = async ({
+  mappings,
+}: MappingsReader) => {
   const { whitelist$, whitelist } = createWhitelistReader()
   // in memory fitlers
   let tableRowsFilters: EosioReaderTableRowFilter[] = []
@@ -21,23 +28,34 @@ export const createShipReaderDataHelper = async () => {
   // this function massages the data for eosio-ship-reader to consume
   const updateShipFilters = (whitelist: ChainGraphContractWhitelist[]) => {
     actionsFilters = whitelist
-      .map(({ contract, actions }) => {
-        const code = contract
-        if (actions[0].action === '*') return [{ code, action: '*' }]
+      .map(({ contract: code, actions }) => {
+        // handle wildcard
+        if (actions === ['*']) return [{ code, action: '*' }]
 
-        return actions.map(({ action }) => ({
-          code,
-          action,
-        }))
+        return (actions as ChainGraphActionWhitelist[]).map(({ action }) => {
+          return {
+            code,
+            action,
+          }
+        })
       })
       .flat()
 
     tableRowsFilters = whitelist
-      .map(({ contract, tables }) => {
-        return tables
+      .map(({ contract: code, tables }) => {
+        // handle wildcard
+        if (tables === ['*']) {
+          // TODO: get all table names from mappings
+          return (
+            mappings
+              .find((m) => m.contract === code)
+              .tables.map(({ table }) => ({ code, table })) || []
+          )
+        }
+
+        return (tables as ChainGraphTableWhitelist[])
           .map(({ table, scopes }) => {
-            const code = contract
-            if (!scopes || scopes[0] === '*') return [{ code, table }]
+            if (!scopes || scopes === ['*']) return [{ code, table }]
             return scopes.map((scope) => ({ code, table, scope }))
           })
           .flat()

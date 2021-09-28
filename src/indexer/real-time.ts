@@ -17,7 +17,7 @@ export const startRealTimeStreaming = async (
 ) => {
   logger.info('Starting realtime indexing from eosio ship ...')
 
-  const { close$, blocks$, errors$ } = await loadReader()
+  const { close$, blocks$, errors$ } = await loadReader(mappingsReader)
 
   // we subscribe to eosio ship reader whitelisted block stream and insert the data in postgres thru prisma
   // this stream contains only the blocks that are relevant to the whitelisted contract tables and actions
@@ -32,14 +32,14 @@ export const startRealTimeStreaming = async (
         .filter((row) => row.present)
         .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
-      upsertTableRows(tableRowsDeltas)
+      if (tableRowsDeltas.length > 0) upsertTableRows(tableRowsDeltas)
 
       // delete table_rows
       const deletedTableRows = block.table_rows
         .filter((row) => !row.present)
         .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
-      deleteTableRows(deletedTableRows)
+      if (deletedTableRows.length > 0) deleteTableRows(deletedTableRows)
 
       // insert block data
       await upsertBlocks([
