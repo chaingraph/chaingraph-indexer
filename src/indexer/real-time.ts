@@ -11,13 +11,14 @@ import {
   upsertTransactions,
 } from '../database'
 import { ChainGraphAction } from '../types'
+import { config } from '../config'
 
 export const startRealTimeStreaming = async (
   mappingsReader: MappingsReader,
 ) => {
   logger.info('Starting realtime indexing from eosio ship ...')
 
-  const { close$, blocks$, errors$ } = await loadReader(mappingsReader)
+  const { close$, blocks$, errors$, forks$ } = await loadReader(mappingsReader)
 
   // we subscribe to eosio ship reader whitelisted block stream and insert the data in postgres thru prisma
   // this stream contains only the blocks that are relevant to the whitelisted contract tables and actions
@@ -29,7 +30,10 @@ export const startRealTimeStreaming = async (
 
       // insert table_rows
       const tableRowsDeltas = block.table_rows
-        .filter((row) => row.present)
+        .filter((row) => {
+          logger.warn({ row })
+          return row.present
+        })
         .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
       if (tableRowsDeltas.length > 0) upsertTableRows(tableRowsDeltas)
@@ -44,7 +48,7 @@ export const startRealTimeStreaming = async (
       // insert block data
       await upsertBlocks([
         {
-          chain: 'eos',
+          chain: config.reader.chain,
           ...omit(block, ['actions', 'table_rows', 'transactions', 'chain_id']),
         },
       ])
@@ -52,7 +56,7 @@ export const startRealTimeStreaming = async (
       // insert transaction data
       const transactions = block.transactions.map((trx) => ({
         ...trx,
-        chain: 'eos',
+        chain: config.reader.chain,
         block_num: block.block_num,
       }))
 
@@ -61,13 +65,17 @@ export const startRealTimeStreaming = async (
         await upsertTransactions(transactions)
 
         // insert action traces
-        const actions: ChainGraphAction[] = block.actions.map((action) => ({
-          ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
-          contract: action.account,
-          action: action.name,
-          chain: 'eos',
-          receiver: '',
-        }))
+        const actions: ChainGraphAction[] = block.actions.map((action) => {
+          // logger.warn('Authorization', typeof action.authorization)
+          // logger.warn('Action Struct', action)
+          return {
+            ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
+            contract: action.account,
+            action: action.name,
+            chain: config.reader.chain,
+            receiver: '',
+          }
+        })
         if (actions.length > 0) await upsertActions(actions)
       }
     } catch (error) {
@@ -79,4 +87,8 @@ export const startRealTimeStreaming = async (
   close$.subscribe(() => logger.info('connection closed'))
   // log$.subscribe(({ message }: any) => logger.info('ShipReader:', message))
   errors$.subscribe((error) => logger.error('ShipReader:', error))
+
+  forks$.subscribe((block_num) =>
+    logger.warn(`Microfork on block number : ${block_num}`),
+  )
 }

@@ -8,7 +8,6 @@ import {
   ChainGraphTableRow,
   ChainGraphTransaction,
 } from '../types'
-import { logger } from '../lib/logger'
 
 // Table Rows
 export const tableRowsColumnSet = new pgp.helpers.ColumnSet(
@@ -20,7 +19,7 @@ export const tableRowsColumnSet = new pgp.helpers.ColumnSet(
 
 export const createUpsertTableRowsQuery = (tableRows: ChainGraphTableRow[]) =>
   pgp.helpers.insert(tableRows, tableRowsColumnSet) +
-  ' ON CONFLICT ON CONSTRAINT table_rows_pkey DO UPDATE SET data=EXCLUDED.data;'
+  ' ON CONFLICT ON CONSTRAINT tables_pkey DO UPDATE SET data=EXCLUDED.data;'
 
 //  Transactions
 export const transactionsColumnSet = new pgp.helpers.ColumnSet(
@@ -41,7 +40,7 @@ export const createUpsertTransactionsQuery = (
   transactions: ChainGraphTransaction[],
 ) =>
   pgp.helpers.insert(transactions, transactionsColumnSet) +
-  ' ON CONSTRAINT transactions_pkey DO UPDATE SET block_num=EXCLUDED.block_num,' +
+  ' ON CONFLICT ON CONSTRAINT transactions_pkey DO UPDATE SET block_num=EXCLUDED.block_num,' +
   ' cpu_usage_us=EXCLUDED.cpu_usage_us, net_usage=EXCLUDED.net_usage, net_usage_words=EXCLUDED.net_usage_words;'
 
 // Blocks
@@ -63,14 +62,14 @@ export const actionsColumnSet = new pgp.helpers.ColumnSet(
     'transaction_id',
     'contract',
     'action',
-    'data',
-    'authorization',
+    { name: 'data', init: (c) => c.source },
+    { name: 'authorization', init: (c) => c.source },
     'global_sequence',
     'action_ordinal',
-    'account_ram_deltas',
-    'receipt',
+    { name: 'account_ram_deltas', init: (c) => c.source },
+    { name: 'receipt', init: (c) => c.source },
     'context_free',
-    'account_disk_deltas',
+    { name: 'account_disk_deltas', init: (c) => c.source },
     'console',
     'receiver',
   ],
@@ -79,11 +78,12 @@ export const actionsColumnSet = new pgp.helpers.ColumnSet(
   },
 )
 
+// TODO: fix bug when updating authorization authorization=EXCLUDED.authorization;
 export const createUpsertActionsQuery = (actions: ChainGraphAction[]) =>
   pgp.helpers.insert(actions, actionsColumnSet) +
-  ' ON CONSTRAINT actions_pkey DO UPDATE SET data=EXCLUDED.data,' +
-  ' authorization=EXCLUDED.authorization, global_sequence=EXCLUDED.global_sequence, action_cardinal=EXCLUDED.action_cardinal' +
-  ' account_ram_deltas=EXCLUDED.account_ram_deltas, receipt=EXCLUDED.receipt, context_free=EXCLUDED.context_free' +
+  ' ON CONFLICT ON CONSTRAINT actions_pkey DO UPDATE SET data=EXCLUDED.data, ' +
+  ' global_sequence=EXCLUDED.global_sequence, action_ordinal=EXCLUDED.action_ordinal,' +
+  ' account_ram_deltas=EXCLUDED.account_ram_deltas, receipt=EXCLUDED.receipt, context_free=EXCLUDED.context_free,' +
   ' account_disk_deltas=EXCLUDED.account_disk_deltas, console=EXCLUDED.console, receiver=EXCLUDED.receiver'
 
 export const createDeleteTableRowsQuery = (
@@ -97,6 +97,5 @@ export const createDeleteTableRowsQuery = (
   const query = pgp.as.format(
     `DELETE * FROM table_rows WHERE (chain, contract, scope, table, primary_key) IN (${list})`,
   )
-  logger.info(query)
   return query
 }

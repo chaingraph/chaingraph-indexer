@@ -1,0 +1,61 @@
+[
+  {
+    "chain": "jungle",
+    "contract": "bitcashaccts",
+    "start_block": 100939520,
+    "actions": [
+      "*"
+    ],
+    "tables": [
+      "*"
+    ],
+    "app_id": "b15230ac-9fc0-41ee-9669-af889d609338",
+    "history_ready": false
+  },
+  {
+    "chain": "jungle",
+    "contract": "eosio.token",
+    "start_block": 100939520,
+    "actions": [
+      {
+        "where": {
+          "_or": [
+            {
+              "from": {
+                "_in": [
+                  "bitcashbank",
+                  "hedgerbitcash"
+                ]
+              }
+            },
+            {
+              "to": {
+                "_in": [
+                  "bitcashbank",
+                  "hedgerbitcash"
+                ]
+              }
+            }
+          ]
+        },
+        "action": "transfer"
+      }
+    ],
+    "tables": [
+      {
+        "table": "stat",
+        "scopes": [
+          "*"
+        ]
+      },
+      {
+        "table": "accounts",
+        "scopes": [
+          "*"
+        ]
+      }
+    ],
+    "app_id": "b15230ac-9fc0-41ee-9669-af889d609338",
+    "history_ready": false
+  }
+]

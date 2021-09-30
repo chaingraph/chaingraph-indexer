@@ -1,8 +1,3 @@
-export type JSONPrimitive = string | number | boolean | null
-export type JSONValue = JSONPrimitive | JSONObject | JSONArray
-export type JSONObject = { [member: string]: JSONValue }
-export type JSONArray = Array<JSONValue>
-
 export interface ChainGraphTransaction {
   chain: string
   transaction_id: string
@@ -18,7 +13,7 @@ export interface ChainGraphTableRow {
   table: string
   scope: string
   primary_key: string
-  data: JSONValue
+  data: {}
 }
 
 export interface ChainGraphChain {
@@ -41,14 +36,14 @@ export interface ChainGraphAction {
   transaction_id: string
   contract: string
   action: string
-  data: JSONValue
-  authorization: JSONValue
+  data: {}
+  authorization: {}
   global_sequence: string
   action_ordinal: number
-  account_ram_deltas: JSONValue | null
-  receipt: JSONValue | null
+  account_ram_deltas: {} | null
+  receipt: {} | null
   context_free: boolean | null
-  account_disk_deltas: JSONValue | null
+  account_disk_deltas: {} | null
   console: string | null
   receiver: string | null
 }
@@ -65,7 +60,7 @@ export interface ChainGraphTableMappings {
   scopes?: string[]
   table: string
   table_type?: 'singleton' | 'multi_index'
-  primary_key: string
+  table_key: string
   computed_key_type?: 'asset_symbol' | 'symbol'
 }
 
@@ -74,12 +69,12 @@ export interface ChainGraphMappings {
   contract: string
   contract_type: string | null
   tables: ChainGraphTableMappings[] | null
-  abi?: JSONValue | null
+  abi?: {} | null
 }
 
 export interface ChainGraphActionWhitelist {
   action: string
-  where?: JSONValue[] | null
+  where?: {}[] | null
 }
 
 export interface ChainGraphTableWhitelist {

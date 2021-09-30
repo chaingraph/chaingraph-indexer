@@ -4,12 +4,14 @@ import {
 } from '@blockmatic/eosio-ship-reader'
 import { config } from '../config'
 import { getInfo } from '../lib/eosio'
+import { logger } from '../lib/logger'
 import { MappingsReader } from '../mappings'
 import { createShipReaderDataHelper } from './reader-helper'
 
 export const loadReader = async (mappingsReader: MappingsReader) => {
   // First we need to get the ABis for all whitelisted contracts
   const readerHelper = await createShipReaderDataHelper(mappingsReader)
+  console.log('GOT readerHelper')
 
   const readerConfig = config.reader
   const start_block_num =
@@ -34,6 +36,23 @@ export const loadReader = async (mappingsReader: MappingsReader) => {
     },
     auto_start: true,
   }
+
+  // logger.info(
+  //   'Creating EOSIO SHiP Reader with config ',
+  //   JSON.stringify(
+  //     {
+  //       ...eosioReaderConfig,
+  //       delta_whitelist: readerHelper.delta_whitelist(),
+  //       contract_abis: readerHelper
+  //         .contract_abis()
+  //         .forEach((_value, key) => ({ contract: key })),
+  //       table_rows_whitelist: readerHelper.table_rows_whitelist(),
+  //       actions_whitelist: readerHelper.actions_whitelist(),
+  //     },
+  //     null,
+  //     2,
+  //   ),
+  // )
 
   return await createEosioShipReader(eosioReaderConfig)
 }
