@@ -67,7 +67,7 @@ export const startRealTimeStreaming = async (
         // insert action traces
         const actions: ChainGraphAction[] = block.actions.map((action) => {
           // logger.warn('Authorization', typeof action.authorization)
-          // logger.warn('Action Struct', action)
+          logger.warn('Action Struct', action)
           return {
             ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
             contract: action.account,

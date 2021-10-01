@@ -8,6 +8,7 @@ import {
   ChainGraphTableRow,
   ChainGraphTransaction,
 } from '../types'
+import { logger } from '../lib/logger'
 
 // Table Rows
 export const tableRowsColumnSet = new pgp.helpers.ColumnSet(
@@ -62,14 +63,32 @@ export const actionsColumnSet = new pgp.helpers.ColumnSet(
     'transaction_id',
     'contract',
     'action',
-    { name: 'data', init: (c) => c.source },
-    { name: 'authorization', init: (c) => c.source },
+    {
+      name: 'data',
+      init: (c) => (c.source as ChainGraphAction).data,
+    },
+    {
+      name: 'authorization',
+      init: (c) => {
+        const auth = (c.source as ChainGraphAction).authorization
+        logger.info(typeof auth, auth)
+        // return typeof auth === 'string' ? JSON.parse(auth) : auth
+        // TODO: fix me
+        return {}
+      },
+    },
     'global_sequence',
     'action_ordinal',
-    { name: 'account_ram_deltas', init: (c) => c.source },
-    { name: 'receipt', init: (c) => c.source },
+    {
+      name: 'account_ram_deltas',
+      init: (c) => {}, // TODO: fix me (c.source as ChainGraphAction).account_ram_deltas,
+    },
+    { name: 'receipt', init: (c) => (c.source as ChainGraphAction).receipt },
     'context_free',
-    { name: 'account_disk_deltas', init: (c) => c.source },
+    {
+      name: 'account_disk_deltas',
+      init: (c) => {}, // TODO: fix me (c.source as ChainGraphAction).account_disk_deltas,
+    },
     'console',
     'receiver',
   ],
@@ -91,11 +110,13 @@ export const createDeleteTableRowsQuery = (
 ) => {
   const list = table_rows.reduce(
     (list, { chain, contract, scope, primary_key, table }) =>
-      `${list}('${chain}','${contract}','${scope}','${table}','${primary_key}')`,
+      `${
+        list ? list + ' ,' : ''
+      } ('${chain}','${contract}','${scope}','${table}','${primary_key}')`,
     '',
   )
   const query = pgp.as.format(
-    `DELETE * FROM table_rows WHERE (chain, contract, scope, table, primary_key) IN (${list})`,
+    `DELETE FROM table_rows WHERE (chain, contract, scope, table_rows.table, primary_key) IN (${list});`,
   )
   return query
 }

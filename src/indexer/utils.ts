@@ -10,7 +10,6 @@ export const getPrimaryKey = (
   mappingsReader: MappingsReader,
 ): string => {
   // find table mappings
-  logger.info(`Get primary key for ${JSON.stringify(row)} `)
   const tableMappings = mappingsReader.mappings
     .find((m) => m.contract === row.code)
     .tables.find((t) => t.table === row.table)
@@ -18,7 +17,6 @@ export const getPrimaryKey = (
   if (!tableMappings) {
     throw new Error(`TableMapping not found for row ${JSON.stringify(row)}`)
   }
-  logger.warn({ tableMappings })
 
   if (tableMappings.table_type === 'singleton') return 'singleton'
 
@@ -31,7 +29,7 @@ export const getPrimaryKey = (
     primary_key = row.value[tableMappings.table_key]
   }
 
-  logger.info({ primary_key })
+  logger.warn({ tableMappings, primary_key })
   return '' + primary_key
 }
 
