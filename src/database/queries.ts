@@ -57,38 +57,20 @@ export const createUpsertBlocksQuery = (blocks: ChainGraphBlock[]) =>
   ' ON CONFLICT ON CONSTRAINT blocks_pkey DO UPDATE SET block_id=EXCLUDED.block_id, timestamp=EXCLUDED.timestamp, producer=EXCLUDED.producer;'
 
 // Actions
-export const actionsColumnSet = new pgp.helpers.ColumnSet(
+export const actionsColumnSet = new pgp.helpers.ColumnSet<ChainGraphAction>(
   [
     'chain',
     'transaction_id',
     'contract',
     'action',
-    {
-      name: 'data',
-      init: (c) => (c.source as ChainGraphAction).data,
-    },
-    {
-      name: 'authorization',
-      init: (c) => {
-        const auth = (c.source as ChainGraphAction).authorization
-        logger.info(typeof auth, auth)
-        // return typeof auth === 'string' ? JSON.parse(auth) : auth
-        // TODO: fix me
-        return {}
-      },
-    },
+    'data',
+    'authorization',
     'global_sequence',
     'action_ordinal',
-    {
-      name: 'account_ram_deltas',
-      init: (c) => {}, // TODO: fix me (c.source as ChainGraphAction).account_ram_deltas,
-    },
-    { name: 'receipt', init: (c) => (c.source as ChainGraphAction).receipt },
+    'account_ram_deltas',
+    'receipt',
     'context_free',
-    {
-      name: 'account_disk_deltas',
-      init: (c) => {}, // TODO: fix me (c.source as ChainGraphAction).account_disk_deltas,
-    },
+    'account_disk_deltas',
     'console',
     'receiver',
   ],
