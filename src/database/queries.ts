@@ -57,6 +57,7 @@ export const createUpsertBlocksQuery = (blocks: ChainGraphBlock[]) =>
   ' ON CONFLICT ON CONSTRAINT blocks_pkey DO UPDATE SET block_id=EXCLUDED.block_id, timestamp=EXCLUDED.timestamp, producer=EXCLUDED.producer;'
 
 // Actions
+// https://github.com/vitaly-t/pg-promise/issues/809
 export const actionsColumnSet = new pgp.helpers.ColumnSet<ChainGraphAction>(
   [
     'chain',
@@ -64,13 +65,22 @@ export const actionsColumnSet = new pgp.helpers.ColumnSet<ChainGraphAction>(
     'contract',
     'action',
     'data',
-    'authorization',
+    {
+      name: 'authorization',
+      init: (c) => JSON.stringify(c.source.authorization),
+    },
     'global_sequence',
     'action_ordinal',
-    'account_ram_deltas',
+    {
+      name: 'account_ram_deltas',
+      init: (c) => JSON.stringify(c.source.account_ram_deltas),
+    },
     'receipt',
     'context_free',
-    'account_disk_deltas',
+    {
+      name: 'account_disk_deltas',
+      init: (c) => JSON.stringify(c.source.account_disk_deltas),
+    },
     'console',
     'receiver',
   ],
@@ -79,11 +89,10 @@ export const actionsColumnSet = new pgp.helpers.ColumnSet<ChainGraphAction>(
   },
 )
 
-// TODO: fix bug when updating authorization authorization=EXCLUDED.authorization;
 export const createUpsertActionsQuery = (actions: ChainGraphAction[]) =>
   pgp.helpers.insert(actions, actionsColumnSet) +
   ' ON CONFLICT ON CONSTRAINT actions_pkey DO UPDATE SET data=EXCLUDED.data, ' +
-  ' global_sequence=EXCLUDED.global_sequence, action_ordinal=EXCLUDED.action_ordinal,' +
+  ' "authorization"=EXCLUDED.authorization, global_sequence=EXCLUDED.global_sequence, action_ordinal=EXCLUDED.action_ordinal,' +
   ' account_ram_deltas=EXCLUDED.account_ram_deltas, receipt=EXCLUDED.receipt, context_free=EXCLUDED.context_free,' +
   ' account_disk_deltas=EXCLUDED.account_disk_deltas, console=EXCLUDED.console, receiver=EXCLUDED.receiver'
 
