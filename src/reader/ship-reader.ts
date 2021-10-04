@@ -6,12 +6,18 @@ import { config } from '../config'
 import { getInfo } from '../lib/eosio'
 import { logger } from '../lib/logger'
 import { MappingsReader } from '../mappings'
+import { WhitelistReader } from '../whitelist'
 import { createShipReaderDataHelper } from './reader-helper'
 
-export const loadReader = async (mappingsReader: MappingsReader) => {
+export const loadReader = async (
+  mappingsReader: MappingsReader,
+  whitelistReader: WhitelistReader,
+) => {
   // First we need to get the ABis for all whitelisted contracts
-  const readerHelper = await createShipReaderDataHelper(mappingsReader)
-  console.log('GOT readerHelper')
+  const readerHelper = await createShipReaderDataHelper(
+    mappingsReader,
+    whitelistReader,
+  )
 
   const readerConfig = config.reader
   const start_block_num =

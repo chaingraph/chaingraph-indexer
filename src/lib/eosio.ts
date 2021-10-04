@@ -5,7 +5,7 @@ import { config } from '../config'
 
 export const rpc = new JsonRpc(config.reader.rpc_url, { fetch })
 
-export const getInfo = () =>
+export const getInfo = async () =>
   fetch(`${config.reader.rpc_url}/v1/chain/get_info`).then((res: any) =>
     res.json(),
   )

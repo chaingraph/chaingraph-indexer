@@ -37,13 +37,13 @@ export interface ChainGraphAction {
   contract: string
   action: string
   data: {}
-  authorization: [{}]
+  authorization: {}[]
   global_sequence: string
   action_ordinal: number
-  account_ram_deltas: [{}] | null
+  account_ram_deltas: {}[] | null
   receipt: {} | null
   context_free: boolean | null
-  account_disk_deltas: [{}] | null
+  account_disk_deltas: {}[] | null
   console: string | null
   receiver: string | null
 }

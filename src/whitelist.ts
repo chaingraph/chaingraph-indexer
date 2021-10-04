@@ -4,12 +4,12 @@ import { db } from './database'
 import { ChainGraphContractWhitelist } from './types'
 import { config } from './config'
 
-export interface whitelistReader {
+export interface WhitelistReader {
   whitelist$: Subject<ChainGraphContractWhitelist[]>
   whitelist: ChainGraphContractWhitelist[]
 }
 
-export const createWhitelistReader = async (): Promise<whitelistReader> => {
+export const createWhitelistReader = async (): Promise<WhitelistReader> => {
   let whitelist: ChainGraphContractWhitelist[] | null = null
   const whitelist$ = new Subject<ChainGraphContractWhitelist[]>()
 

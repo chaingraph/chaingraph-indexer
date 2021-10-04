@@ -111,3 +111,11 @@ export const createDeleteTableRowsQuery = (
   )
   return query
 }
+
+export const deleteBlock = (chain: string, block_num: number) => {
+  const query = pgp.as.format(
+    `DELETE FROM blocks WHERE chain = $1 AND block_num = $2`,
+    [chain, block_num],
+  )
+  return query
+}

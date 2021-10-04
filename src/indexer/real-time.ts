@@ -12,13 +12,19 @@ import {
 } from '../database'
 import { ChainGraphAction } from '../types'
 import { config } from '../config'
+import { deleteBlock } from '../database/queries'
+import { WhitelistReader } from '../whitelist'
 
 export const startRealTimeStreaming = async (
   mappingsReader: MappingsReader,
+  whitelistReader: WhitelistReader,
 ) => {
   logger.info('Starting realtime indexing from eosio ship ...')
 
-  const { close$, blocks$, errors$, forks$ } = await loadReader(mappingsReader)
+  const { close$, blocks$, errors$, forks$ } = await loadReader(
+    mappingsReader,
+    whitelistReader,
+  )
 
   // we subscribe to eosio ship reader whitelisted block stream and insert the data in postgres thru prisma
   // this stream contains only the blocks that are relevant to the whitelisted contract tables and actions
@@ -45,6 +51,9 @@ export const startRealTimeStreaming = async (
 
       if (deletedTableRows.length > 0) deleteTableRows(deletedTableRows)
 
+      // delete block data in case of microfork
+      await deleteBlock(config.reader.chain, block.block_num)
+
       // insert block data
       await upsertBlocks([
         {
@@ -65,17 +74,23 @@ export const startRealTimeStreaming = async (
         await upsertTransactions(transactions)
 
         // insert action traces
-        const actions: ChainGraphAction[] = block.actions.map((action) => {
-          // logger.warn('Authorization', typeof action.authorization)
-          logger.warn('Action Struct', action)
-          return {
-            ...omit(action, 'account', 'name', 'elapsed', 'return_value'),
-            contract: action.account,
-            action: action.name,
-            chain: config.reader.chain,
-            receiver: '',
-          }
-        })
+        const actions: ChainGraphAction[] = block.actions.map((action) => ({
+          chain: config.reader.chain,
+          transaction_id: action.transaction_id,
+          contract: action.account,
+          action: action.name,
+          data: action.data,
+          authorization: action.authorization,
+          global_sequence: action.global_sequence,
+          action_ordinal: action.action_ordinal,
+          account_ram_deltas: action.account_ram_deltas,
+          receipt: action.receipt,
+          context_free: action.context_free,
+          account_disk_deltas: action.account_disk_deltas,
+          console: action.console,
+          receiver: '', // TODO : review this
+        }))
+
         if (actions.length > 0) await upsertActions(actions)
       }
     } catch (error) {

@@ -37,10 +37,10 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
           authorization: action.act.authorization,
           global_sequence: action.global_sequence.toString(),
           action_ordinal: action.action_ordinal,
-          account_ram_deltas: '',
+          account_ram_deltas: [],
           receipt: {},
           context_free: false,
-          account_disk_deltas: '',
+          account_disk_deltas: [],
           console: '',
           receiver: '',
         })

@@ -11,7 +11,7 @@ import {
   ChainGraphContractWhitelist,
   ChainGraphTableWhitelist,
 } from '../types'
-import { createWhitelistReader } from '../whitelist'
+import { WhitelistReader } from '../whitelist'
 
 export interface ReaderHelper {
   delta_whitelist: () => ShipTableDeltaName[]
@@ -25,9 +25,8 @@ export interface ReaderHelper {
 // this helper subscribes to the contract mappings subject and load abis in memory for ship reader to consume
 export const createShipReaderDataHelper = async (
   mappingsReader: MappingsReader,
+  whitelistReader: WhitelistReader,
 ): Promise<ReaderHelper> => {
-  const { whitelist$, whitelist } = await createWhitelistReader()
-
   // in memory fitlers and abis
   let tableRowsFilters: EosioReaderTableRowFilter[] | null = null
   let actionsFilters: EosioReaderActionFilter[] | null = null
@@ -74,13 +73,13 @@ export const createShipReaderDataHelper = async (
   }
 
   // create in-memory filter for ship and subscribe to mappings to keep ship filter in sync
-  updateShipFilters(whitelist)
-  whitelist$.subscribe(updateShipFilters)
+  updateShipFilters(whitelistReader.whitelist)
+  whitelistReader.whitelist$.subscribe(updateShipFilters)
 
   // load abis in memory
   // TODO: load abis to db when contracts are listed, and keep in sync with then chain, listed to set abi actions.
   abis = new Map()
-  const contracts = whitelist.map(({ contract }) => contract)
+  const contracts = whitelistReader.whitelist.map(({ contract }) => contract)
   const abisArr = await Promise.all(contracts.map((c) => fecthAbi(c)))
   abisArr.forEach(({ account_name, abi }) => abis.set(account_name, abi))
 
