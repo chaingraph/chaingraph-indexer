@@ -20,6 +20,7 @@ export interface EosioReaderConfig {
 
 export interface Config {
   database_url: string
+  hyperion_url: string
   reader: EosioReaderConfig
 }
 
@@ -38,4 +39,5 @@ export const config: Config = {
     ds_threads: 4,
     ds_experimental: false,
   },
+  hyperion_url: 'https://jungle3.eosusa.news',
 }

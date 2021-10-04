@@ -1,6 +1,4 @@
 import { logger } from '../lib/logger'
-import { JsonRpc, Action as HyperionAction } from '@eoscafe/hyperion'
-import fetch from 'isomorphic-fetch'
 import uniqBy from 'lodash.uniqby'
 import pThrottle from 'p-throttle'
 import { whilst } from '../lib/promises'
@@ -11,25 +9,22 @@ import {
   ChainGraphBlock,
   ChainGraphTransaction,
 } from '../types'
+import { hyperion, HyperionAction } from '../lib/hyperion'
+import { config } from '../config'
 
-const endpoint =
-  process.env.HYPERION_ENDPOINT || 'https://eos.hyperion.eosrio.io'
-const rpc = new JsonRpc(endpoint, { fetch })
-const PAGE_SIZE = 1000 // parseInt(process.env.MAX_ACTIONS_LIMIT || '1000')
+type UpsertCollections = {
+  actions: ChainGraphAction[]
+  transactions: ChainGraphTransaction[]
+  blocks: ChainGraphBlock[]
+}
 
 const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
   logger.info(`Loading ${hyperion_actions.length} hyperion actions ...`)
   try {
-    type UpsertObjects = {
-      actions: ChainGraphAction[]
-      transactions: ChainGraphTransaction[]
-      blocks: ChainGraphBlock[]
-    }
-
-    const objects: UpsertObjects = hyperion_actions.reduce(
-      (accumulator: UpsertObjects, action: any) => {
+    const objects: UpsertCollections = hyperion_actions.reduce(
+      (accumulator: UpsertCollections, action: any) => {
         accumulator.actions.push({
-          chain: 'eos',
+          chain: config.reader.chain,
           transaction_id: action.trx_id,
           contract: action.act.account,
           action: action.act.name,
@@ -46,7 +41,7 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
         })
 
         accumulator.blocks.push({
-          chain: 'eos',
+          chain: config.reader.chain,
           block_num: action.block_num,
           block_id: action.block_id,
           producer: action.producer,
@@ -54,7 +49,7 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
         })
 
         accumulator.transactions.push({
-          chain: 'eos',
+          chain: config.reader.chain,
           block_num: action.block_num,
           transaction_id: action.trx_id,
           cpu_usage_us: 0,
@@ -90,6 +85,7 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
 
 export const loadActionHistory = async (account: string, filter: string) => {
   // walk over hyperion pagination.
+  const hyperionPageSize = 1000
   const now = Date.now()
   const throttleRequest = pThrottle({
     limit: 1,
@@ -103,16 +99,16 @@ export const loadActionHistory = async (account: string, filter: string) => {
     logger.info(
       `===> throttledHyperionGetActions for ${account}:${filter} with a ${secDiff} difference from starting time`,
     )
-    return rpc.get_actions(account, {
+    return hyperion.get_actions(account, {
       filter: `${account}:${filter}`,
-      limit: PAGE_SIZE,
-      skip: PAGE_SIZE * page,
+      limit: hyperionPageSize,
+      skip: hyperionPageSize * page,
     })
   })
 
   const loadHyperionPages = async () => {
-    const filter_page = `filter: ${account}:${filter}, limit: ${PAGE_SIZE}, skip: ${
-      PAGE_SIZE * page
+    const filter_page = `filter: ${account}:${filter}, limit: ${hyperionPageSize}, skip: ${
+      hyperionPageSize * page
     }, page ${page}`
     logger.info(`Loading action history from Hyperion for ${filter_page}`)
 
