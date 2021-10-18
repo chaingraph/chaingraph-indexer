@@ -54,11 +54,16 @@ export const createShipReaderDataHelper = async (
     tableRowsFilters = whitelist
       .map(({ contract: code, tables }) => {
         // handle wildcard
+        console.log({ code })
         if (tables[0] === '*') {
           const contractMappings = mappingsReader.mappings.find((m) => {
             return m.contract === code
           })
 
+          console.log('Mappings', mappingsReader.mappings)
+          if (!contractMappings) {
+            throw new Error('Mappings for contract not found')
+          }
           return contractMappings.tables.map(({ table }) => ({ code, table }))
         }
 
