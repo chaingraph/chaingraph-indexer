@@ -29,7 +29,7 @@ export const getPrimaryKey = (
     primary_key = row.value[tableMappings.table_key]
   }
 
-  logger.warn({ tableMappings, primary_key })
+  // logger.warn({ tableMappings, primary_key })
   return '' + primary_key
 }
 
