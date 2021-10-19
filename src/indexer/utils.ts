@@ -9,28 +9,33 @@ export const getPrimaryKey = (
   row: EosioReaderTableRow,
   mappingsReader: MappingsReader,
 ): string => {
-  // find table mappings
-  const tableMappings = mappingsReader.mappings
-    .find((m) => m.contract === row.code)
-    .tables.find((t) => t.table === row.table)
+  let tableMappings
+  try {
+    // find table mappings
+    tableMappings = mappingsReader.mappings
+      .find((m) => m.contract === row.code)
+      .tables.find((t) => t.table === row.table)
 
-  if (!tableMappings) {
-    throw new Error(`TableMapping not found for row ${JSON.stringify(row)}`)
+    if (!tableMappings) {
+      throw new Error(`TableMapping not found for row ${JSON.stringify(row)}`)
+    }
+
+    if (tableMappings.table_type === 'singleton') return 'singleton'
+
+    let primary_key
+    if (tableMappings.computed_key_type === 'asset_symbol') {
+      primary_key = row.value[tableMappings.table_key].split(' ')[1]
+    } else if (tableMappings.computed_key_type === 'symbol') {
+      primary_key = row.value[tableMappings.table_key].split(',')[1]
+    } else {
+      primary_key = row.value[tableMappings.table_key]
+    }
+    return '' + primary_key
+  } catch (error) {
+    logger.warn({ row, tableMappings })
+    if (error instanceof Error) logger.error(error)
+    process.exit(1)
   }
-
-  if (tableMappings.table_type === 'singleton') return 'singleton'
-
-  let primary_key
-  if (tableMappings.computed_key_type === 'asset_symbol') {
-    primary_key = row.value[tableMappings.table_key].split(' ')[1]
-  } else if (tableMappings.computed_key_type === 'symbol') {
-    primary_key = row.value[tableMappings.table_key].split(',')[1]
-  } else {
-    primary_key = row.value[tableMappings.table_key]
-  }
-
-  // logger.warn({ tableMappings, primary_key })
-  return '' + primary_key
 }
 
 export const getChainGraphTableRowData = (
