@@ -26,18 +26,22 @@ export const loadCurrentTableState = async (
 ) => {
   logger.info('Loading current table state ...')
 
-  //for each table in registry get all of its data ( all scopes and rows ) and pushed it to the database
+  //  for each table in registry get all of its data ( all scopes and rows ) and pushed it to the database
   whitelistReader.whitelist.forEach(
     async ({ contract, tables: tablesFilter }) => {
       // TODO: if eosio.token skip for now
       if (contract === 'eosio.token') return
       // logger.info('Preparing', { contract, tablesFilter })
       let tables: ChainGraphTableWhitelist[] = []
+
       if (tablesFilter[0] === '*') {
         // get all table names from mappings
-        const table_names = mappingsReader.mappings
-          .find((m) => m.contract === contract)
-          .tables.map((t) => t.table)
+        const res = mappingsReader.mappings.find((m) => m.contract === contract)
+        if (!res) {
+          throw new Error(`No mappings for contract ${contract} where found`)
+        }
+        const table_names = res.tables.map((t) => t.table)
+
         tables = await Promise.all(
           table_names.map(async (table) => ({
             table,
@@ -48,7 +52,7 @@ export const loadCurrentTableState = async (
         tables = await Promise.all(
           tablesFilter.map(async (filter) => {
             if (filter.scopes[0] === '*') {
-              logger.info('Wildcard in scopes!')
+              logger.info('Wildcard in scopes!', filter)
               return {
                 table: filter.table,
                 scopes: await getTableScopes(contract, filter.table),
