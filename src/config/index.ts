@@ -25,8 +25,7 @@ export interface Config {
 }
 
 export const config: Config = {
-  database_url:
-    'postgres://graph_overlord:sbq6E684F38FXNSmyD39Poh5jnq5gk@chaingraph.cluster-cjxjy2z3vanz.us-east-1.rds.amazonaws.com:5432/chaingraph?sslmode=disable',
+  database_url: env.get('DATABASE_URL').required().asString(),
   reader: {
     chain: 'jungle',
     chain_id:
