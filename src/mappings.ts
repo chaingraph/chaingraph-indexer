@@ -25,7 +25,7 @@ export const createMappingsReader = async (): Promise<MappingsReader> => {
       if (JSON.stringify(result) !== JSON.stringify(mappings)) {
         mappings = result
         mappings$.next(mappings)
-        logger.info('New mappings', JSON.stringify(mappings))
+        // logger.info('New mappings', JSON.stringify(mappings))
       }
     } catch (error) {
       logger.error('Error updating contract mappings', error)

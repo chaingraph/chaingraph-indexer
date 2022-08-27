@@ -21,22 +21,22 @@ const getTableScopes = async (code: string, table: string) => {
 }
 
 export const loadCurrentTableState = async (
-  mappingsReader: MappingsReader,
-  whitelistReader: WhitelistReader,
+  mappings_reader: MappingsReader,
+  whitelist_reader: WhitelistReader,
 ) => {
   logger.info('Loading current table state ...')
 
   //  for each table in registry get all of its data ( all scopes and rows ) and pushed it to the database
-  whitelistReader.whitelist.forEach(
-    async ({ contract, tables: tablesFilter }) => {
+  whitelist_reader.whitelist.forEach(
+    async ({ contract, tables: tables_filter }) => {
       // TODO: if eosio.token skip for now
       if (contract === 'eosio.token') return
-      // logger.info('Preparing', { contract, tablesFilter })
+      // logger.info('Preparing', { contract, tables_filter })
       let tables: ChainGraphTableWhitelist[] = []
 
-      if (tablesFilter[0] === '*') {
+      if (tables_filter[0] === '*') {
         // get all table names from mappings
-        const res = mappingsReader.mappings.find((m) => m.contract === contract)
+        const res = mappings_reader.mappings.find((m) => m.contract === contract)
         if (!res) {
           throw new Error(`No mappings for contract ${contract} where found`)
         }
@@ -50,7 +50,7 @@ export const loadCurrentTableState = async (
         )
       } else {
         tables = await Promise.all(
-          tablesFilter.map(async (filter) => {
+          tables_filter.map(async (filter) => {
             if (filter.scopes[0] === '*') {
               logger.info('Wildcard in scopes!', filter)
               return {
@@ -69,7 +69,7 @@ export const loadCurrentTableState = async (
         // if scopes is emtpy here it means there's no data to load
         if (scopes.length === 0) return
         // tables rows requests for this table
-        const tableRowsRequests = scopes.map(async (scope) => {
+        const table_rows_requests = scopes.map(async (scope) => {
           const { rows } = await rpc.get_table_rows({
             code: contract,
             scope,
@@ -87,16 +87,16 @@ export const loadCurrentTableState = async (
                 scope,
                 value: row,
               },
-              mappingsReader,
+              mappings_reader,
             ),
           )
         })
 
-        // get all table rows acrross all scope flat them out on allRows array
-        const allRows = (await Promise.all(tableRowsRequests)).flat()
+        // get all table rows acrross all scope flat them out on all_rows array
+        const all_rows = (await Promise.all(table_rows_requests)).flat()
         // upsert all table rows on the database
-        await upsertTableRows(allRows)
-        logger.info(`Loaded state for ${JSON.stringify(allRows)}!`)
+        await upsertTableRows(all_rows)
+        logger.info(`Loaded state for ${JSON.stringify(all_rows)}!`)
       })
     },
   )

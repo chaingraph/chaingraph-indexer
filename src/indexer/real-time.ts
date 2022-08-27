@@ -16,14 +16,14 @@ import { deleteBlock } from '../database/queries'
 import { WhitelistReader } from '../whitelist'
 
 export const startRealTimeStreaming = async (
-  mappingsReader: MappingsReader,
-  whitelistReader: WhitelistReader,
+  mappings_reader: MappingsReader,
+  whitelist_reader: WhitelistReader,
 ) => {
   logger.info('Starting realtime indexing from eosio ship ...')
 
   const { close$, blocks$, errors$, forks$ } = await loadReader(
-    mappingsReader,
-    whitelistReader,
+    mappings_reader,
+    whitelist_reader,
   )
 
   // we subscribe to eosio ship reader whitelisted block stream and insert the data in postgres thru prisma
@@ -35,21 +35,21 @@ export const startRealTimeStreaming = async (
       )
 
       // insert table_rows
-      const tableRowsDeltas = block.table_rows
+      const table_rows_deltas = block.table_rows
         .filter((row) => {
           logger.warn({ row })
           return row.present
         })
-        .map((row) => getChainGraphTableRowData(row, mappingsReader))
+        .map((row) => getChainGraphTableRowData(row, mappings_reader))
 
-      if (tableRowsDeltas.length > 0) upsertTableRows(tableRowsDeltas)
+      if (table_rows_deltas.length > 0) upsertTableRows(table_rows_deltas)
 
       // delete table_rows
-      const deletedTableRows = block.table_rows
+      const deleted_table_rows = block.table_rows
         .filter((row) => !row.present)
-        .map((row) => getChainGraphTableRowData(row, mappingsReader))
+        .map((row) => getChainGraphTableRowData(row, mappings_reader))
 
-      if (deletedTableRows.length > 0) deleteTableRows(deletedTableRows)
+      if (deleted_table_rows.length > 0) deleteTableRows(deleted_table_rows)
 
       // delete block data in case of microfork
       await deleteBlock(config.reader.chain, block.block_num)
