@@ -45,10 +45,10 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
-"@blockmatic/eosio-ship-reader@^0.4.3":
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/@blockmatic/eosio-ship-reader/-/eosio-ship-reader-0.4.3.tgz#519672bca9467908ee12b18b6ea47194f5df5cd5"
-  integrity sha512-xHZuistvjMK41iKrPFJXPvrr5uEPcR83TUXdriV73S1CWWjPO81NgzabRgf6g1QNetMcyprUlNpZdiOepF5eSQ==
+"@blockmatic/eosio-ship-reader@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@blockmatic/eosio-ship-reader/-/eosio-ship-reader-0.5.0.tgz#570d7e065324cb5d0a97bdba0d02937779d9ea28"
+  integrity sha512-LeNBlsrHVzY8DZGDFc8Ip6shT+xjgmW3dIVlFG1UWY+sE32blRJPpDgc/dGVkCvGwFgs0ztMHrDRitirzuMEEQ==
   dependencies:
     "@eosrio/node-abieos" "^2.1.1"
     "@types/node-fetch" "^2.5.10"
@@ -135,10 +135,12 @@
     "@types/debug" "^0.0.31"
     debug "^4.1.0"
 
-"@eoscafe/hyperion@^3.2.9":
-  version "3.2.9"
-  resolved "https://registry.yarnpkg.com/@eoscafe/hyperion/-/hyperion-3.2.9.tgz#d2887647b6ccf575d451b2ef0cac50fda0b53113"
-  integrity sha512-FqwhSk0Y+e2ARgtg43rk09VhI8EUSqFcJ+YU6TFvnL3t5I37rPxlSgKy0Tsb0GBlNa6AaQxaRFAYdh0QuM667A==
+"@eoscafe/hyperion@^3.3.2":
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/@eoscafe/hyperion/-/hyperion-3.3.2.tgz#e5cba108cffc59dc0167ddc59c164d99c5000bce"
+  integrity sha512-tZrhCUp4vnpdUyblI4MvxxSSCTZYsObI1wD3m0LZwKb6oEmDXggkzXxe01XXjxW1mPh/vS6QJZX9JLvFYa/QBw==
+  dependencies:
+    cross-fetch "^3.1.5"
 
 "@eosrio/node-abieos@^2.1.1":
   version "2.1.1"
@@ -160,10 +162,10 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@greymass/eosio@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@greymass/eosio/-/eosio-0.5.0.tgz#04d7c5f6375254d5acafc7d3a309501c9638615b"
-  integrity sha512-BE3/Z2p7wWRBFw/PqgzSN/bv+4QV5KSk7rlOT7CsnS8KCc25nCWfeimw4fZa+i5T1z2uycfQqQB9BnGj57xo6A==
+"@greymass/eosio@^0.6.4":
+  version "0.6.4"
+  resolved "https://registry.yarnpkg.com/@greymass/eosio/-/eosio-0.6.4.tgz#9baf8aadacad69d61be20a53e235a9b4cbd97ffa"
+  integrity sha512-Wxr46tgh4J5Nm5tdTx5btJ/MZu36bZfxxCXfWRDAMfOn6FFFwgcZpY/sEv5eH9L2rCvxVrZtd2R8vPGsF/amQQ==
   dependencies:
     bn.js "^4.11.9"
     brorand "^1.1.0"
@@ -820,6 +822,13 @@ cross-fetch@^3.0.6:
   integrity sha512-1eAtFWdIubi6T4XPy6ei9iUFoKpUkIF971QLN8lIvvvwueI65+Nw5haMNKUwfJxabqlIIDODJKGrQ66gxC0PbQ==
   dependencies:
     node-fetch "2.6.1"
+
+cross-fetch@^3.1.5:
+  version "3.1.5"
+  resolved "https://registry.yarnpkg.com/cross-fetch/-/cross-fetch-3.1.5.tgz#e1389f44d9e7ba767907f7af8454787952ab534f"
+  integrity sha512-lvb1SBsI0Z7GDwmuid+mU3kWVBwTVUbe7S0H52yaaAdQOXq2YktTCZdlAcNKFzE6QtRz0snpw9bNiPeOIkkQvw==
+  dependencies:
+    node-fetch "2.6.7"
 
 cross-spawn@^7.0.0, cross-spawn@^7.0.2, cross-spawn@^7.0.3:
   version "7.0.3"
@@ -1956,6 +1965,13 @@ node-fetch@2.6.1, node-fetch@^2.6.1:
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
   integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
 
+node-fetch@2.6.7:
+  version "2.6.7"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.7.tgz#24de9fba827e3b4ae44dc8b20256a379160052ad"
+  integrity sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==
+  dependencies:
+    whatwg-url "^5.0.0"
+
 node-worker-threads-pool@1.4.3:
   version "1.4.3"
   resolved "https://registry.yarnpkg.com/node-worker-threads-pool/-/node-worker-threads-pool-1.4.3.tgz#0c809df7f14f1e829e5f20a88357afafa5f30116"
@@ -2776,6 +2792,11 @@ to-regex-range@^5.0.1:
   dependencies:
     is-number "^7.0.0"
 
+tr46@~0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/tr46/-/tr46-0.0.3.tgz#8184fd347dac9cdc185992f3a6622e14b9d9ab6a"
+  integrity sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==
+
 tree-kill@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/tree-kill/-/tree-kill-1.2.2.tgz#4ca09a9092c88b73a7cdc5e8a01b507b0790a0cc"
@@ -2927,10 +2948,23 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
+webidl-conversions@^3.0.0:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/webidl-conversions/-/webidl-conversions-3.0.1.tgz#24534275e2a7bc6be7bc86611cc16ae0a5654871"
+  integrity sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==
+
 whatwg-fetch@^3.4.1:
   version "3.6.2"
   resolved "https://registry.yarnpkg.com/whatwg-fetch/-/whatwg-fetch-3.6.2.tgz#dced24f37f2624ed0281725d51d0e2e3fe677f8c"
   integrity sha512-bJlen0FcuU/0EMLrdbJ7zOnW6ITZLrZMIarMUVmdKtsGvZna8vxKYaexICWPfZ8qwf9fzNq+UEIZrnSaApt6RA==
+
+whatwg-url@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/whatwg-url/-/whatwg-url-5.0.0.tgz#966454e8765462e37644d3626f6742ce8b70965d"
+  integrity sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==
+  dependencies:
+    tr46 "~0.0.3"
+    webidl-conversions "^3.0.0"
 
 which-boxed-primitive@^1.0.2:
   version "1.0.2"

@@ -28,8 +28,8 @@ export const createShipReaderDataHelper = async (
   whitelistReader: WhitelistReader,
 ): Promise<ReaderHelper> => {
   // in memory fitlers and abis
-  let tableRowsFilters: EosioReaderTableRowFilter[] | null = null
-  let actionsFilters: EosioReaderActionFilter[] | null = null
+  let table_rows_filters: EosioReaderTableRowFilter[] | null = null
+  let actions_filters: EosioReaderActionFilter[] | null = null
   let abis: EosioReaderAbisMap | null = null
 
   // ship filter have a different format than ChainGraph mappings
@@ -37,7 +37,7 @@ export const createShipReaderDataHelper = async (
   // eosio-ship-reader will support the chaingraph protocol, this is temporary
   // we should supoort actions: *, tables: * on the yml
   const updateShipFilters = (whitelist: ChainGraphContractWhitelist[]) => {
-    actionsFilters = whitelist
+    actions_filters = whitelist
       .map(({ contract: code, actions }) => {
         // handle wildcard
         if (actions[0] === '*') return [{ code, action: '*' }]
@@ -51,7 +51,7 @@ export const createShipReaderDataHelper = async (
       })
       .flat()
 
-    tableRowsFilters = whitelist
+    table_rows_filters = whitelist
       .map(({ contract: code, tables }) => {
         // handle wildcard
         console.log({ code })
@@ -69,7 +69,7 @@ export const createShipReaderDataHelper = async (
 
         return (tables as ChainGraphTableWhitelist[])
           .map(({ table, scopes }) => {
-            if (!scopes || scopes === ['*']) return [{ code, table }]
+            if (!scopes || JSON.stringify(scopes) === JSON.stringify(['*'])) return [{ code, table }]
             return scopes.map((scope) => ({ code, table, scope }))
           })
           .flat()
@@ -100,13 +100,13 @@ export const createShipReaderDataHelper = async (
     ] as ShipTableDeltaName[]
 
   // return in memory filters
-  const table_rows_whitelist = () => tableRowsFilters
-  const actions_whitelist = () => actionsFilters
+  const table_rows_whitelist = () => table_rows_filters
+  const actions_whitelist = () => actions_filters
 
   // Wait until results have been loaded to memory
   await abis
-  await actionsFilters
-  await tableRowsFilters
+  await actions_filters
+  await table_rows_filters
 
   return {
     delta_whitelist,

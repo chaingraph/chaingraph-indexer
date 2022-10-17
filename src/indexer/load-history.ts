@@ -6,11 +6,13 @@ import { MappingsReader } from '../mappings'
 import { upsertActions, upsertBlocks, upsertTransactions } from '../database'
 import {
   ChainGraphAction,
+  ChainGraphActionWhitelist,
   ChainGraphBlock,
   ChainGraphTransaction,
 } from '../types'
 import { hyperion, HyperionAction } from '../lib/hyperion'
 import { config } from '../config'
+import { WhitelistReader } from '../whitelist'
 
 type UpsertCollections = {
   actions: ChainGraphAction[]
@@ -123,6 +125,8 @@ export const loadActionHistory = async (account: string, filter: string) => {
       morePages = false
       return false
     } catch (error) {
+      logger.error(error)
+      process.exit()
       logger.info('hyperion request failed')
       return true // keep trying
     }
@@ -133,15 +137,34 @@ export const loadActionHistory = async (account: string, filter: string) => {
   logger.info('Succesfully loaded history from Hyperion!', 'LOL ???')
 }
 
-export const loadHistory = async (mappingsReader: MappingsReader) => {
+export const loadHistory = async (whitelist_reader: WhitelistReader) => {
   logger.info('Loading action and transaction history ...')
   try {
-    // const actions = mappingsReader.get_actions_whitelist()
-    // await Promise.all(
-    //   actions.map(async (action) =>
-    //     loadActionHistory(action.code, action.action),
-    //   ),
-    // )
+    const actions_filters = whitelist_reader.whitelist
+      .map(({ contract: code, actions }) => {
+        // if wildcard we need to get action names from abi
+        if (actions[0] === '*') {
+          
+        }
+
+        return (actions as ChainGraphActionWhitelist[]).map(({ action }) => {
+          return {
+            code,
+            action,
+          }
+        })
+      })
+      .flat()
+
+      console.log('===========================')
+      console.log(actions_filters)
+      console.log('===========================')
+
+      await Promise.all(
+        [{code:'bank.bk', action:'deposit'}].map(async (action) =>
+          loadActionHistory(action.code, action.action),
+        ),
+      )
   } catch (error) {
     console.error(
       'Error loading actions and transaction data from Hyperion',

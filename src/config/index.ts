@@ -38,5 +38,5 @@ export const config: Config = {
     ds_threads: 4,
     ds_experimental: false,
   },
-  hyperion_url: 'https://jungle3.eosusa.news',
+  hyperion_url: 'https://eos.hyperion.eosrio.io',
 }

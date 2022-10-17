@@ -2,7 +2,6 @@ import { startRealTimeStreaming } from './real-time'
 import { loadCurrentTableState } from './load-state'
 import { loadHistory } from './load-history'
 import { createMappingsReader } from '../mappings'
-import { createDeleteTableRowsQuery } from '../database/queries'
 import { createWhitelistReader } from '../whitelist'
 
 export const startIndexer = async () => {
@@ -15,5 +14,5 @@ export const startIndexer = async () => {
   // load current state of whitelisted tables, overwritting real-time stream insn't an issue since it's the latest state
   loadCurrentTableState(mappings_reader, whitelist_reader)
   /// load historical action and transaction data from dFuse community edition
-  //loadHistory(whitelist_reader)
+  loadHistory(whitelist_reader)
 }
