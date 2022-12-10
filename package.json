@@ -33,8 +33,8 @@
     "@types/lodash.uniqby": "^4.7.6",
     "@types/node": "^16.9.4",
     "@types/text-encoding": "^0.0.36",
-    "@types/ws": "^7.4.7",
     "env-cmd": "^10.1.0",
+    "env-var": "^7.0.1",
     "eslint": "7",
     "husky": "^7.0.2",
     "lint-staged": "^11.1.2",
@@ -45,19 +45,12 @@
   },
   "dependencies": {
     "@blockmatic/eosio-ship-reader": "^0.5.0",
-    "@chaingraph.io/hasura-client": "^1.4.1",
-    "@dfuse/client": "^0.3.20",
     "@eoscafe/hyperion": "^3.3.2",
     "@eosrio/node-abieos": "^2.1.1",
     "@greymass/eosio": "^0.6.4",
     "bluebird": "^3.7.2",
-    "env-cmd": "^10.1.0",
-    "env-var": "^7.0.1",
     "eos-common": "^0.8.1",
     "eosjs": "^22.1.0",
-    "graphql": "^15.6.0",
-    "graphql-request": "3.5.0",
-    "hasura-cli": "^2.0.8",
     "isomorphic-fetch": "^3.0.0",
     "lodash.chunk": "^4.2.0",
     "lodash.omit": "^4.5.0",
@@ -69,7 +62,6 @@
     "pg-promise": "^10.11.0",
     "rxjs": "^7.3.0",
     "text-encoding": "^0.7.0",
-    "tslog": "^3.2.2",
-    "ws": "^8.2.2"
+    "tslog": "^3.2.2"
   }
 }
