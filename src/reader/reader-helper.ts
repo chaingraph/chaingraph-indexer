@@ -69,7 +69,8 @@ export const createShipReaderDataHelper = async (
 
         return (tables as ChainGraphTableWhitelist[])
           .map(({ table, scopes }) => {
-            if (!scopes || JSON.stringify(scopes) === JSON.stringify(['*'])) return [{ code, table }]
+            if (!scopes || JSON.stringify(scopes) === JSON.stringify(['*']))
+              return [{ code, table }]
             return scopes.map((scope) => ({ code, table, scope }))
           })
           .flat()

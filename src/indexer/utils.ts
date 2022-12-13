@@ -27,6 +27,8 @@ export const getPrimaryKey = (
       primary_key = row.value[tableMappings.table_key].split(' ')[1]
     } else if (tableMappings.computed_key_type === 'symbol') {
       primary_key = row.value[tableMappings.table_key].split(',')[1]
+    } else if (tableMappings.computed_key_type === 'extended_asset_symbol') {
+      primary_key = row.value[tableMappings.table_key].quantity.split(' ')[1]
     } else {
       primary_key = row.value[tableMappings.table_key]
     }
@@ -34,7 +36,7 @@ export const getPrimaryKey = (
   } catch (error) {
     logger.warn({ row, tableMappings })
     if (error instanceof Error) logger.error(error)
-    process.exit(1)
+    // process.exit(1)
   }
 }
 

@@ -5,6 +5,7 @@ import { MappingsReader } from '../mappings'
 import { WhitelistReader } from '../whitelist'
 import { ChainGraphTableWhitelist } from '../types'
 import { upsertTableRows } from '../database'
+import _ from 'lodash'
 
 const getTableScopes = async (code: string, table: string) => {
   logger.info(`getTableScopes for ${code} table ${table}`)
@@ -36,7 +37,9 @@ export const loadCurrentTableState = async (
 
       if (tables_filter[0] === '*') {
         // get all table names from mappings
-        const res = mappings_reader.mappings.find((m) => m.contract === contract)
+        const res = mappings_reader.mappings.find(
+          (m) => m.contract === contract,
+        )
         if (!res) {
           throw new Error(`No mappings for contract ${contract} where found`)
         }
@@ -77,7 +80,7 @@ export const loadCurrentTableState = async (
             limit: 1000000,
           })
           // for each row get the right format for ChainGraph
-          return rows.map((row) =>
+          const tableData = rows.map((row) =>
             getChainGraphTableRowData(
               {
                 primary_key: '0', // also fixed cos getChainGraphTableRowData determines the real primary_key value
@@ -90,6 +93,15 @@ export const loadCurrentTableState = async (
               mappings_reader,
             ),
           )
+
+          // NOTE: not sure why I'm getting duplicated rows.
+          const unique_row_deltas = _.uniqBy(tableData, (row) => {
+            return (
+              row.chain + row.contract + row.table + row.scope + row.primary_key
+            )
+          })
+
+          return unique_row_deltas
         })
 
         // get all table rows acrross all scope flat them out on all_rows array
