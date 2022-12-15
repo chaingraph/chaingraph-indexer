@@ -158,6 +158,7 @@ export const loadHistory = async (whitelist_reader: WhitelistReader) => {
     console.log(actions_filters)
     console.log('===========================')
 
+    // Here we load action tracer history. code === contract. action === the action on the contract to trace
     await Promise.all(
       [{ code: 'bank.bk', action: 'deposit' }].map(async (action) =>
         loadActionHistory(action.code, action.action),

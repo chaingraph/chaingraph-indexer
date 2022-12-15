@@ -14,6 +14,7 @@ import { ChainGraphAction } from '../types'
 import { config } from '../config'
 import { deleteBlock } from '../database/queries'
 import { WhitelistReader } from '../whitelist'
+import { uniqBy } from 'lodash'
 
 export const startRealTimeStreaming = async (
   mappings_reader: MappingsReader,
@@ -34,35 +35,53 @@ export const startRealTimeStreaming = async (
         `Processed block ${block.block_num}. Transactions: ${block.transactions.length}, actions ${block.actions.length}, table rows ${block.table_rows.length} `,
       )
 
-      // insert table_rows
-      const table_rows_deltas = block.table_rows
+      // insert table_rows and filtering them by unique p_key to avoid duplicates and real-time crash
+      const table_rows_deltas = uniqBy(block.table_rows
         .filter((row) => {
           logger.warn({ row })
-          return row.present
+          return row.present && row.primary_key && !Boolean(row.primary_key.toLowerCase().match(/(undefined|\[object object\])/g))
         })
-        .map((row) => getChainGraphTableRowData(row, mappings_reader))
-        .filter((row) => row.primary_key && Boolean(row.primary_key.match(/(undefined|\[object Object\])/g)))
+        .map((row) => {
+          let digested_row = row
 
-      if (table_rows_deltas.length > 0) upsertTableRows(table_rows_deltas)
+          // Regulating the ID type
+          // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
+          if (row.table === 'datapoints' && row.code === 'delphioracle') {
+            digested_row = {
+              ...digested_row,
+              value: {
+                ...digested_row.value,
+                id: parseInt(digested_row.value.id)
+              }
+            }
+
+            return getChainGraphTableRowData(digested_row, mappings_reader)
+          }
+           
+          return getChainGraphTableRowData(digested_row, mappings_reader)
+        }), 'primary_key')
+
+      if (table_rows_deltas.length > 0) await upsertTableRows(table_rows_deltas)
 
       // delete table_rows
       const deleted_table_rows = block.table_rows
         .filter((row) => !row.present)
         .map((row) => getChainGraphTableRowData(row, mappings_reader))
 
-      if (deleted_table_rows.length > 0) deleteTableRows(deleted_table_rows)
+      if (deleted_table_rows.length > 0) await deleteTableRows(deleted_table_rows)
 
       // delete block data in case of microfork
-      deleteBlock(config.reader.chain, block.block_num)
+      // deleteBlock(config.reader.chain, block.block_num)
       
       // TODO: real-time blocks are crashing due duplicates
+      // TODO: In order to know if the block has an uniq block_id, we have to know the actual blocks on the indexer to know if is a duplicate, else to improve the contraint while pgs finds a conflict and set the data differently perhaps?
       // insert block data
-      await upsertBlocks([
-        {
-          chain: config.reader.chain,
-          ...omit(block, ['actions', 'table_rows', 'transactions', 'chain_id']),
-        },
-      ])
+      // await upsertBlocks([
+      //   {
+      //     chain: config.reader.chain,
+      //     ...omit(block, ['actions', 'table_rows', 'transactions', 'chain_id']),
+      //   },
+      // ])
 
       // insert transaction data
       const transactions = block.transactions.map((trx) => ({
