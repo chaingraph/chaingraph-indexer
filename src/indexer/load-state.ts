@@ -31,6 +31,7 @@ export const loadCurrentTableState = async (
   whitelist_reader.whitelist.forEach(
     async ({ contract, tables: tables_filter }) => {
       // TODO: if eosio.token skip for now
+      // TODO: Reconsider to re-open for wallet balances? @gaboesquivel
       if (contract === 'eosio.token') return
       // logger.info('Preparing', { contract, tables_filter })
       let tables: ChainGraphTableWhitelist[] = []
@@ -108,7 +109,7 @@ export const loadCurrentTableState = async (
         const all_rows = (await Promise.all(table_rows_requests)).flat()
         // upsert all table rows on the database
         await upsertTableRows(all_rows)
-        logger.info(`Loaded state for ${JSON.stringify(all_rows)}!`)
+        logger.info(`Loaded state for ${JSON.stringify(all_rows, null, 2)}!`)
       })
     },
   )

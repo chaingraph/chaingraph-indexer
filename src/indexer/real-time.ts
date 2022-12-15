@@ -41,7 +41,7 @@ export const startRealTimeStreaming = async (
           return row.present
         })
         .map((row) => getChainGraphTableRowData(row, mappings_reader))
-        .filter((row) => row.primary_key && row.primary_key !== 'undefined')
+        .filter((row) => row.primary_key && Boolean(row.primary_key.match(/(undefined|\[object object\])/g)))
 
       if (table_rows_deltas.length > 0) upsertTableRows(table_rows_deltas)
 
@@ -53,8 +53,9 @@ export const startRealTimeStreaming = async (
       if (deleted_table_rows.length > 0) deleteTableRows(deleted_table_rows)
 
       // delete block data in case of microfork
-      await deleteBlock(config.reader.chain, block.block_num)
-
+      deleteBlock(config.reader.chain, block.block_num)
+      
+      // TODO: real-time blocks are crashing due duplicates
       // insert block data
       await upsertBlocks([
         {
@@ -95,7 +96,7 @@ export const startRealTimeStreaming = async (
         if (actions.length > 0) await upsertActions(actions)
       }
     } catch (error) {
-      logger.fatal(error)
+      logger.fatal('=> real-time blocks$.subscribe:', error)
       process.exit(1)
     }
   })

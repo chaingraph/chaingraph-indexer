@@ -52,6 +52,7 @@ export const blocksColumnSet = new pgp.helpers.ColumnSet(
   },
 )
 
+// TODO: At some point, when we upsertBlocks for real-time data, it throws duplicate key value violates unique constraint "blocks_block_id_key"
 export const createUpsertBlocksQuery = (blocks: ChainGraphBlock[]) =>
   pgp.helpers.insert(blocks, blocksColumnSet) +
   ' ON CONFLICT ON CONSTRAINT blocks_pkey DO UPDATE SET block_id=EXCLUDED.block_id, timestamp=EXCLUDED.timestamp, producer=EXCLUDED.producer;'

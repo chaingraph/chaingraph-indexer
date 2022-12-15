@@ -14,6 +14,11 @@ yarn install
 # Development server with reload
 yarn dev
 
+# If you're having issues to write on remote VM, try:
+sudo chown -R username path 
+# Example:
+sudo chown -R andler /opt/chaingraph 
+
 ```
 
 ## Docker

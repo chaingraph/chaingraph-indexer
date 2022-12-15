@@ -76,7 +76,7 @@ const loadHyperionActions = async (hyperion_actions: HyperionAction<any>[]) => {
     return true
   } catch (error) {
     logger.error(
-      'ERRROOOR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',
+      '=> hyperion_actions:',
       Object.keys(error.response),
       error.response.errors,
     )
@@ -126,9 +126,8 @@ export const loadActionHistory = async (account: string, filter: string) => {
       return false
     } catch (error) {
       logger.error(error)
-      process.exit()
       logger.info('hyperion request failed')
-      return true // keep trying
+      return process.exit(0) // keep trying
     }
   }
 
