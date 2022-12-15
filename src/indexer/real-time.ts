@@ -41,7 +41,7 @@ export const startRealTimeStreaming = async (
           return row.present
         })
         .map((row) => getChainGraphTableRowData(row, mappings_reader))
-        .filter((row) => row.primary_key && Boolean(row.primary_key.match(/(undefined|\[object object\])/g)))
+        .filter((row) => row.primary_key && Boolean(row.primary_key.match(/(undefined|\[object Object\])/g)))
 
       if (table_rows_deltas.length > 0) upsertTableRows(table_rows_deltas)
 
