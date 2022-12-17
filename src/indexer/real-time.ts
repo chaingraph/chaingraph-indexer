@@ -1,7 +1,7 @@
 import { loadReader } from '../reader/ship-reader'
 import omit from 'lodash.omit'
 import { logger } from '../lib/logger'
-import { getChainGraphTableRowData } from './utils'
+import { getChainGraphTableRowData, getPrimaryKey } from './utils'
 import { MappingsReader } from '../mappings'
 import {
   deleteTableRows,
@@ -31,19 +31,19 @@ export const startRealTimeStreaming = async (
   // this stream contains only the blocks that are relevant to the whitelisted contract tables and actions
   blocks$.subscribe(async (block) => {
     try {
-      logger.info(
-        `Processed block ${block.block_num}. Transactions: ${block.transactions.length}, actions ${block.actions.length}, table rows ${block.table_rows.length} `,
-      )
+      // logger.info(
+      //   `Processed block ${block.block_num}. Transactions: ${block.transactions.length}, actions ${block.actions.length}, table rows ${block.table_rows.length} `,
+      // )
 
       // insert table_rows and filtering them by unique p_key to avoid duplicates and real-time crash
       const table_rows_deltas = uniqBy(block.table_rows
         .filter((row) => {
-          logger.warn({ row })
-          return row.present && row.primary_key && !Boolean(row.primary_key.toLowerCase().match(/(undefined|\[object object\])/g))
+          logger.warn('The received row...', { row })
+          return row.present && Boolean(row.primary_key) && !Boolean(row.primary_key.normalize().toLowerCase().includes('undefined'))
         })
         .map((row) => {
           let digested_row = row
-
+          
           // Regulating the ID type
           // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
           if (row.table === 'datapoints' && row.code === 'delphioracle') {

@@ -28,11 +28,12 @@ export const getPrimaryKey = (
     } else if (tableMappings.computed_key_type === 'symbol') {
       primary_key = row.value[tableMappings.table_key].split(',')[1]
     } else if (tableMappings.computed_key_type === 'extended_asset_symbol') {
-      primary_key = row.value[tableMappings.table_key].quantity.split(' ')[1]
+      primary_key = row.table === 'stablev2' ? `balance_${row.value[tableMappings.table_key].quantity.split(' ')[1]}` : row.value[tableMappings.table_key].quantity.split(' ')[1]
     } else {
       primary_key = row.value[tableMappings.table_key]
     }
-    return '' + primary_key
+
+    return String(primary_key) !== '[object Object]' ? String(primary_key) : ''
   } catch (error) {
     logger.warn({ row, tableMappings })
     if (error instanceof Error) logger.error(error)
@@ -45,8 +46,8 @@ export const getChainGraphTableRowData = (
   mappingsReader: MappingsReader,
 ): ChainGraphTableRow => {
   return {
-    primary_key: getPrimaryKey(row, mappingsReader).toString(),
     ...omit(row, 'value', 'code', 'present', 'primary_key'),
+    primary_key: getPrimaryKey(row, mappingsReader),
     data: row.value,
     contract: row.code,
     chain: config.reader.chain,

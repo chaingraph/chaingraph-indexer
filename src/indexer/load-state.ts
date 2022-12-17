@@ -108,9 +108,11 @@ export const loadCurrentTableState = async (
         // get all table rows acrross all scope flat them out on all_rows array
         const all_rows = (await Promise.all(table_rows_requests)).flat()
         // upsert all table rows on the database
-        await upsertTableRows(all_rows)
+        const all_filtered_rows = all_rows.filter(row => row.primary_key && !Boolean(row.primary_key.toString().normalize().toLowerCase().match(/(undefined|\[object object\])g/)))
 
-        logger.info(`Loaded state for ${JSON.stringify(all_rows.filter(f => f), null, 2)}!`)
+        await upsertTableRows(all_filtered_rows)
+
+        // logger.info(`Loaded state for ${JSON.stringify(all_rows.filter(f => f), null, 2)}!`)
       })
     },
   )
