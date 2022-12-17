@@ -14,7 +14,7 @@ import { ChainGraphAction } from '../types'
 import { config } from '../config'
 import { deleteBlock } from '../database/queries'
 import { WhitelistReader } from '../whitelist'
-import { uniqBy } from 'lodash'
+import { concat, uniqBy } from 'lodash'
 
 export const startRealTimeStreaming = async (
   mappings_reader: MappingsReader,
@@ -31,37 +31,36 @@ export const startRealTimeStreaming = async (
   // this stream contains only the blocks that are relevant to the whitelisted contract tables and actions
   blocks$.subscribe(async (block) => {
     try {
-      // logger.info(
-      //   `Processed block ${block.block_num}. Transactions: ${block.transactions.length}, actions ${block.actions.length}, table rows ${block.table_rows.length} `,
-      // )
+      logger.info(
+        `Processed block ${block.block_num}. Transactions: ${block.transactions.length}, actions ${block.actions.length}, table rows ${block.table_rows.length} `,
+      )
 
       // insert table_rows and filtering them by unique p_key to avoid duplicates and real-time crash
-      const table_rows_deltas = uniqBy(block.table_rows
+      const table_rows_deltas = block.table_rows
         .filter((row) => {
-          logger.warn('The received row...', { row })
-          return row.present && Boolean(row.primary_key) && !Boolean(row.primary_key.normalize().toLowerCase().includes('undefined'))
+          logger.warn('> The received row =>', { row })
+          return row.code !== 'delphioracle' && row.present && Boolean(row.primary_key) && !Boolean(row.primary_key.normalize().toLowerCase().includes('undefined'))
+        })
+        .map((row) => getChainGraphTableRowData(row, mappings_reader))
+      const delphioracle_rows_deltas = uniqBy(block.table_rows
+        .filter((row) => {
+          return row.code === 'delphioracle' && row.present && Boolean(row.primary_key) && !Boolean(row.primary_key.normalize().toLowerCase().includes('undefined'))
         })
         .map((row) => {
-          let digested_row = row
-          
           // Regulating the ID type
           // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
-          if (row.table === 'datapoints' && row.code === 'delphioracle') {
-            digested_row = {
-              ...digested_row,
-              value: {
-                ...digested_row.value,
-                id: parseInt(digested_row.value.id)
-              }
+          const digested_row = {
+            ...row,
+            value: {
+              ...row.value,
+              id: parseInt(row.value.id)
             }
-
-            return getChainGraphTableRowData(digested_row, mappings_reader)
           }
-           
+          
           return getChainGraphTableRowData(digested_row, mappings_reader)
         }), 'primary_key')
 
-      if (table_rows_deltas.length > 0) await upsertTableRows(table_rows_deltas)
+      if (table_rows_deltas.length > 0 || delphioracle_rows_deltas.length > 0) await upsertTableRows(concat(table_rows_deltas, delphioracle_rows_deltas))
 
       // delete table_rows
       const deleted_table_rows = block.table_rows
