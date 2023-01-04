@@ -42,7 +42,10 @@ export const startRealTimeStreaming = async (
           return (
             row.code !== 'delphioracle' &&
             row.present &&
-            Boolean(row.primary_key)
+            Boolean(row.primary_key) &&
+            !Boolean(
+              row.primary_key.normalize().toLowerCase().includes('undefined'),
+            ) // TODO: improve me
           )
         })
         .map((row) => getChainGraphTableRowData(row, mappings_reader))
@@ -52,7 +55,10 @@ export const startRealTimeStreaming = async (
             return (
               row.code === 'delphioracle' &&
               row.present &&
-              Boolean(row.primary_key)
+              Boolean(row.primary_key) &&
+              !Boolean(
+                row.primary_key.normalize().toLowerCase().includes('undefined'),
+              ) // TODO: improve me
             )
           })
           .map((row) => {

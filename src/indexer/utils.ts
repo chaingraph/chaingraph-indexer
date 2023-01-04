@@ -35,7 +35,9 @@ export const getPrimaryKey = (
             }`
           : row.value[tableMappings.table_key].quantity.split(' ')[1]
     } else {
+      // TODO: PLEASE FIX ME @andler
       primary_key = row.value[tableMappings.table_key]
+      if (primary_key + '' === 'undefined') primary_key = '[INVALID_PK]'
     }
     let normalized_primary_key = primary_key
     if (primary_key + '' === '[object Object]') {
