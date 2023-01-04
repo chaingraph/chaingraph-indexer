@@ -39,39 +39,54 @@ export const startRealTimeStreaming = async (
       const table_rows_deltas = block.table_rows
         .filter((row) => {
           logger.warn('> The received row =>', { row })
-          return row.code !== 'delphioracle' && row.present && Boolean(row.primary_key) && !Boolean(row.primary_key.normalize().toLowerCase().includes('undefined'))
+          return (
+            row.code !== 'delphioracle' &&
+            row.present &&
+            Boolean(row.primary_key)
+          )
         })
         .map((row) => getChainGraphTableRowData(row, mappings_reader))
-      const delphioracle_rows_deltas = uniqBy(block.table_rows
-        .filter((row) => {
-          return row.code === 'delphioracle' && row.present && Boolean(row.primary_key) && !Boolean(row.primary_key.normalize().toLowerCase().includes('undefined'))
-        })
-        .map((row) => {
-          // Regulating the ID type
-          // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
-          const digested_row = {
-            ...row,
-            value: {
-              ...row.value,
-              id: parseInt(row.value.id)
+      const delphioracle_rows_deltas = uniqBy(
+        block.table_rows
+          .filter((row) => {
+            return (
+              row.code === 'delphioracle' &&
+              row.present &&
+              Boolean(row.primary_key)
+            )
+          })
+          .map((row) => {
+            // Regulating the ID type
+            // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
+            const digested_row = {
+              ...row,
+              value: {
+                ...row.value,
+                id: parseInt(row.value.id),
+              },
             }
-          }
-          
-          return getChainGraphTableRowData(digested_row, mappings_reader)
-        }), 'primary_key')
 
-      if (table_rows_deltas.length > 0 || delphioracle_rows_deltas.length > 0) await upsertTableRows(concat(table_rows_deltas, delphioracle_rows_deltas))
+            return getChainGraphTableRowData(digested_row, mappings_reader)
+          }),
+        'primary_key',
+      )
+
+      if (table_rows_deltas.length > 0 || delphioracle_rows_deltas.length > 0)
+        await upsertTableRows(
+          concat(table_rows_deltas, delphioracle_rows_deltas),
+        )
 
       // delete table_rows
       const deleted_table_rows = block.table_rows
         .filter((row) => !row.present)
         .map((row) => getChainGraphTableRowData(row, mappings_reader))
 
-      if (deleted_table_rows.length > 0) await deleteTableRows(deleted_table_rows)
+      if (deleted_table_rows.length > 0)
+        await deleteTableRows(deleted_table_rows)
 
       // delete block data in case of microfork
       // deleteBlock(config.reader.chain, block.block_num)
-      
+
       // TODO: real-time blocks are crashing due duplicates
       // TODO: In order to know if the block has an uniq block_id, we have to know the actual blocks on the indexer to know if is a duplicate, else to improve the contraint while pgs finds a conflict and set the data differently perhaps?
       // insert block data
