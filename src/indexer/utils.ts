@@ -43,6 +43,7 @@ export const getPrimaryKey = (
     } else {
       normalized_primary_key = primary_key + '_' + row.code
     }
+    return normalized_primary_key
   } catch (error) {
     logger.warn({ row, tableMappings })
     if (error instanceof Error) logger.error(error)
