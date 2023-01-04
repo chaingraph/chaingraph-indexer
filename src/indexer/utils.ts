@@ -32,8 +32,12 @@ export const getPrimaryKey = (
     } else {
       primary_key = row.value[tableMappings.table_key]
     }
-
-    return String(primary_key) !== '[object Object]' ? String(primary_key) : ''
+    let normalized_primary_key = primary_key
+    if (primary_key + '' === '[object Object]') {
+      normalized_primary_key = JSON.stringify(primary_key) + '_' + row.contract
+    } else {
+      normalized_primary_key = primary_key + '_' + row.contract
+    }
   } catch (error) {
     logger.warn({ row, tableMappings })
     if (error instanceof Error) logger.error(error)
