@@ -28,15 +28,20 @@ export const getPrimaryKey = (
     } else if (tableMappings.computed_key_type === 'symbol') {
       primary_key = row.value[tableMappings.table_key].split(',')[1]
     } else if (tableMappings.computed_key_type === 'extended_asset_symbol') {
-      primary_key = row.table === 'stablev2' ? `balance_${row.value[tableMappings.table_key].quantity.split(' ')[1]}` : row.value[tableMappings.table_key].quantity.split(' ')[1]
+      primary_key =
+        row.table === 'stablev2'
+          ? `balance_${
+              row.value[tableMappings.table_key].quantity.split(' ')[1]
+            }`
+          : row.value[tableMappings.table_key].quantity.split(' ')[1]
     } else {
       primary_key = row.value[tableMappings.table_key]
     }
     let normalized_primary_key = primary_key
     if (primary_key + '' === '[object Object]') {
-      normalized_primary_key = JSON.stringify(primary_key) + '_' + row.contract
+      normalized_primary_key = JSON.stringify(primary_key) + '_' + row.code
     } else {
-      normalized_primary_key = primary_key + '_' + row.contract
+      normalized_primary_key = primary_key + '_' + row.code
     }
   } catch (error) {
     logger.warn({ row, tableMappings })
