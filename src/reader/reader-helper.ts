@@ -27,6 +27,7 @@ export const createShipReaderDataHelper = async (
   mappingsReader: MappingsReader,
   whitelistReader: WhitelistReader,
 ): Promise<ReaderHelper> => {
+  console.log('createShipReaderDataHelper')
   // in memory fitlers and abis
   let table_rows_filters: EosioReaderTableRowFilter[] | null = null
   let actions_filters: EosioReaderActionFilter[] | null = null
@@ -60,7 +61,6 @@ export const createShipReaderDataHelper = async (
             return m.contract === code
           })
 
-          console.log('Mappings', mappingsReader.mappings)
           if (!contractMappings) {
             throw new Error('Mappings for contract not found')
           }
@@ -108,6 +108,8 @@ export const createShipReaderDataHelper = async (
   await abis
   await actions_filters
   await table_rows_filters
+
+  console.log('actions_filters', actions_filters)
 
   return {
     delta_whitelist,

@@ -34,6 +34,7 @@ export const startRealTimeStreaming = async (
       logger.info(
         `Processed block ${block.block_num}. Transactions: ${block.transactions.length}, actions ${block.actions.length}, table rows ${block.table_rows.length} `,
       )
+        
 
       // insert table_rows and filtering them by unique p_key to avoid duplicates and real-time crash
       const table_rows_deltas = block.table_rows
@@ -99,7 +100,7 @@ export const startRealTimeStreaming = async (
           transaction_id: action.transaction_id,
           contract: action.account,
           action: action.name,
-          data: action.data,
+          data: JSON.stringify(action.data),
           authorization: action.authorization,
           global_sequence: action.global_sequence,
           action_ordinal: action.action_ordinal,

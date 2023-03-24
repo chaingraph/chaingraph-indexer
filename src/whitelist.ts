@@ -10,6 +10,7 @@ export interface WhitelistReader {
 }
 
 export const createWhitelistReader = async (): Promise<WhitelistReader> => {
+  console.log('createWhitelistReader')
   let whitelist: ChainGraphContractWhitelist[] | null = null
   const whitelist$ = new Subject<ChainGraphContractWhitelist[]>()
 
@@ -24,8 +25,9 @@ export const createWhitelistReader = async (): Promise<WhitelistReader> => {
       if (JSON.stringify(result) !== JSON.stringify(whitelist)) {
         whitelist = result
         whitelist$.next(whitelist)
-        // logger.info('New whitelist', JSON.stringify(whitelist))
+        logger.info('New whitelist', JSON.stringify(whitelist))
       }
+
     } catch (error) {
       logger.error('Error updating contract whitelist', error)
     }
