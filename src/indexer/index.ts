@@ -14,7 +14,7 @@ export const startIndexer = async () => {
   // start indexing state updates in real-time as soon as the server starts
   startRealTimeStreaming(mappings_reader, whitelist_reader)
   // load current state of whitelisted tables, overwritting real-time stream insn't an issue since it's the latest state
-  // loadCurrentTableState(mappings_reader, whitelist_reader)
+  loadCurrentTableState(mappings_reader, whitelist_reader)
   /// load historical action and transaction data from dFuse community edition
-  // loadHistory(whitelist_reader)
+  loadHistory(whitelist_reader)
 }
