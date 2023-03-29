@@ -116,6 +116,7 @@ export const startRealTimeStreaming = async (
       }
     } catch (error) {
       logger.fatal('=> real-time blocks$.subscribe:', error)
+      // send message to discord
       process.exit(1)
     }
   })

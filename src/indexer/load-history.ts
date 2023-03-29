@@ -143,6 +143,7 @@ export const loadHistory = async (whitelist_reader: WhitelistReader) => {
       .map(({ contract: code, actions }) => {
         // if wildcard we need to get action names from abi
         if (actions[0] === '*') {
+        
         }
 
         return (actions as ChainGraphActionWhitelist[]).map(({ action }) => {
@@ -157,13 +158,8 @@ export const loadHistory = async (whitelist_reader: WhitelistReader) => {
     console.log('===========================')
     console.log(actions_filters)
     console.log('===========================')
+   loadHyperionActions(actions_filters)
 
-    // Here we load action tracer history. code === contract. action === the action on the contract to trace
-    await Promise.all(
-      [{ code: 'bank.bk', action: 'deposit' }].map(async (action) =>
-        loadActionHistory(action.code, action.action),
-      ),
-    )
   } catch (error) {
     console.error(
       'Error loading actions and transaction data from Hyperion',
