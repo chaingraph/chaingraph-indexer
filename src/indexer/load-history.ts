@@ -136,7 +136,7 @@ export const loadActionHistory = async (account: string, filter: string) => {
 
   await whilst(hasMorePages, loadHyperionPages)
 
-  logger.info('Succesfully loaded history from Hyperion!', 'LOL ???')
+  logger.info('Succesfully loaded history from Hyperion!')
 }
 
 export const loadHistory = async (whitelistReader: WhitelistReader) => {
@@ -144,11 +144,9 @@ export const loadHistory = async (whitelistReader: WhitelistReader) => {
   try {
     const actionFilters = whitelistReader.whitelist
       .map(({ contract: code, actions }) => {
-        // if wildcard we need to get action names from abi
-        if (actions[0] === '*') {
-          console.log('code actions', { code, actions })
-        }
-
+        // if wildcard we need reformat for hyperion
+        if (actions[0] === '*') return [{ code, action: '*' }]
+        
         return (actions as ChainGraphActionWhitelist[]).map(({ action }) => {
           return {
             code,
@@ -158,10 +156,10 @@ export const loadHistory = async (whitelistReader: WhitelistReader) => {
       })
       .flat()
 
-    console.log('============ actionFilters ===============')
-    console.log(actionFilters)
-    console.log('==========================================')
-    // loadHyperionActions(actions_filters)
+    await Promise.all(
+      actionFilters.map(async ({action, code}) => loadActionHistory(code, action),
+      ),
+    )
   } catch (error) {
     console.error(
       'Error loading actions and transaction data from Hyperion',
