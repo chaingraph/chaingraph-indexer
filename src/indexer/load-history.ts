@@ -89,14 +89,17 @@ export const loadActionHistory = async (account: string, filter: string) => {
   // walk over hyperion pagination.
   const hyperionPageSize = 1000
   const now = Date.now()
+
+  let page = 0
+  let morePages = true
+  const hasMorePages = () => morePages
+
   const throttleRequest = pThrottle({
     limit: 1,
     interval: 1000,
   })
-  let page = 0
-  let morePages = true
-  const hasMorePages = () => morePages
-  const throttledHyperionGetActions = throttleRequest((page: number) => {
+
+  const throttledHyperionGetActions = throttleRequest((pageNumber: number) => {
     const secDiff = ((Date.now() - now) / 1000).toFixed()
     logger.info(
       `===> throttledHyperionGetActions for ${account}:${filter} with a ${secDiff} difference from starting time`,
@@ -104,7 +107,7 @@ export const loadActionHistory = async (account: string, filter: string) => {
     return hyperion.get_actions(account, {
       filter: `${account}:${filter}`,
       limit: hyperionPageSize,
-      skip: hyperionPageSize * page,
+      skip: hyperionPageSize * pageNumber,
     })
   })
 
@@ -136,14 +139,14 @@ export const loadActionHistory = async (account: string, filter: string) => {
   logger.info('Succesfully loaded history from Hyperion!', 'LOL ???')
 }
 
-export const loadHistory = async (whitelist_reader: WhitelistReader) => {
+export const loadHistory = async (whitelistReader: WhitelistReader) => {
   logger.info('Loading action and transaction history ...')
   try {
-    const actions_filters = whitelist_reader.whitelist
+    const actionFilters = whitelistReader.whitelist
       .map(({ contract: code, actions }) => {
         // if wildcard we need to get action names from abi
         if (actions[0] === '*') {
-        
+          console.log('code actions', { code, actions })
         }
 
         return (actions as ChainGraphActionWhitelist[]).map(({ action }) => {
@@ -155,11 +158,10 @@ export const loadHistory = async (whitelist_reader: WhitelistReader) => {
       })
       .flat()
 
-    console.log('===========================')
-    console.log(actions_filters)
-    console.log('===========================')
-   loadHyperionActions(actions_filters)
-
+    console.log('============ actionFilters ===============')
+    console.log(actionFilters)
+    console.log('==========================================')
+    // loadHyperionActions(actions_filters)
   } catch (error) {
     console.error(
       'Error loading actions and transaction data from Hyperion',
