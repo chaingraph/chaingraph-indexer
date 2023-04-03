@@ -15,16 +15,17 @@ import { config } from '../config'
 import { deleteBlock } from '../database/queries'
 import { WhitelistReader } from '../whitelist'
 import { concat, uniqBy } from 'lodash'
+import { loadCurrentTableState } from './load-state'
 
 export const startRealTimeStreaming = async (
-  mappings_reader: MappingsReader,
-  whitelist_reader: WhitelistReader,
+  mappingsReader: MappingsReader,
+  whitelistReader: WhitelistReader,
 ) => {
   logger.info('Starting realtime indexing from eosio ship ...')
 
   const { close$, blocks$, errors$, forks$ } = await loadReader(
-    mappings_reader,
-    whitelist_reader,
+    mappingsReader,
+    whitelistReader,
   )
 
   // we subscribe to eosio ship reader whitelisted block stream and insert the data in postgres thru prisma
@@ -48,7 +49,7 @@ export const startRealTimeStreaming = async (
             )
           )
         })
-        .map((row) => getChainGraphTableRowData(row, mappings_reader))
+        .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
       const delphioracle_rows_deltas = uniqBy(
         block.table_rows
@@ -73,7 +74,7 @@ export const startRealTimeStreaming = async (
               },
             }
 
-            return getChainGraphTableRowData(digested_row, mappings_reader)
+            return getChainGraphTableRowData(digested_row, mappingsReader)
           }),
         'primary_key',
       )
@@ -87,7 +88,7 @@ export const startRealTimeStreaming = async (
       // delete table_rows
       const deleted_table_rows = block.table_rows
         .filter((row) => !row.present)
-        .map((row) => getChainGraphTableRowData(row, mappings_reader))
+        .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
       if (deleted_table_rows.length > 0) {
         await deleteTableRows(deleted_table_rows)
@@ -146,7 +147,10 @@ export const startRealTimeStreaming = async (
   // log$.subscribe(({ message }: any) => logger.info('ShipReader:', message))
   errors$.subscribe((error) => logger.error('ShipReader:', error))
 
-  forks$.subscribe((block_num) =>
-    logger.warn(`Microfork on block number : ${block_num}`),
+  forks$.subscribe((block_num) => {
+    logger.warn(`Microfork on block number : ${block_num}`)
+    // load current state of whitelisted tables,
+    loadCurrentTableState(mappingsReader, whitelistReader)
+   }
   )
 }

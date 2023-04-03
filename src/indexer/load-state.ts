@@ -22,13 +22,13 @@ const getTableScopes = async (code: string, table: string) => {
 }
 
 export const loadCurrentTableState = async (
-  mappings_reader: MappingsReader,
-  whitelist_reader: WhitelistReader,
+  mappingsReader: MappingsReader,
+  whitelistReader: WhitelistReader,
 ) => {
   logger.info('Loading current table state ...')
 
   //  for each table in registry get all of its data ( all scopes and rows ) and pushed it to the database
-  whitelist_reader.whitelist.forEach(
+  whitelistReader.whitelist.forEach(
     async ({ contract, tables: tables_filter }) => {
       // TODO: if eosio.token skip for now
       // TODO: Reconsider to re-open for wallet balances? @gaboesquivel
@@ -38,7 +38,7 @@ export const loadCurrentTableState = async (
 
       if (tables_filter[0] === '*') {
         // get all table names from mappings
-        const res = mappings_reader.mappings.find(
+        const res = mappingsReader.mappings.find(
           (m) => m.contract === contract,
         )
         if (!res) {
@@ -91,7 +91,7 @@ export const loadCurrentTableState = async (
                 scope,
                 value: row,
               },
-              mappings_reader,
+              mappingsReader,
             ),
           )
 
