@@ -23,14 +23,28 @@ export const getPrimaryKey = (
     if (tableMappings.table_type === 'singleton') return 'singleton'
 
     let primary_key
-    if (tableMappings.computed_key_type === 'asset_symbol') {
-      primary_key = row.value[tableMappings.table_key].split(' ')[1]
-    } else if (tableMappings.computed_key_type === 'symbol') {
-      primary_key = row.value[tableMappings.table_key].split(',')[1]
-    } else if (tableMappings.computed_key_type === 'extended_asset_symbol') {
-      primary_key = row.table === 'stablev2' ? `balance_${row.value[tableMappings.table_key].quantity.split(' ')[1]}` : row.value[tableMappings.table_key].quantity.split(' ')[1]
-    } else {
-      primary_key = row.value[tableMappings.table_key]
+    switch (tableMappings.computed_key_type) {
+      case 'proposal_creator_id':
+        const tableValue = row.value[tableMappings.table_key]
+        primary_key = `proposal_${tableValue.creator}_${tableValue.proposal_id}`
+        break
+      case 'asset_symbol':
+        primary_key = row.value[tableMappings.table_key].split(' ')[1]
+        break
+      case 'symbol':
+        primary_key = row.value[tableMappings.table_key].split(',')[1]
+        break
+      case 'extended_asset_symbol':
+        primary_key =
+          row.table === 'stablev2'
+            ? `balance_${
+                row.value[tableMappings.table_key].quantity.split(' ')[1]
+              }`
+            : row.value[tableMappings.table_key].quantity.split(' ')[1]
+        break
+      default:
+        primary_key = row.value[tableMappings.table_key]
+        break
     }
 
     return String(primary_key) !== '[object Object]' ? String(primary_key) : ''
