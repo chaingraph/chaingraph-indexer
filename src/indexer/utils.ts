@@ -25,8 +25,7 @@ export const getPrimaryKey = (
     let primary_key
     switch (tableMappings.computed_key_type) {
       case 'proposal_creator_id':
-        const tableValue = row.value[tableMappings.table_key]
-        primary_key = `proposal_${tableValue.creator}_${tableValue.proposal_id}`
+        primary_key = `proposal_${row.value.creator}_${row.value.proposal_id}`
         break
       case 'asset_symbol':
         primary_key = row.value[tableMappings.table_key].split(' ')[1]
