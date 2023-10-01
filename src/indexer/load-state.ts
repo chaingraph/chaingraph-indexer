@@ -1,5 +1,5 @@
 import { logger } from '../lib/logger'
-import { rpc } from '../lib/eosio'
+import { getTableByScope, rpc } from '../lib/eosio'
 import { getChainGraphTableRowData } from './utils'
 import { MappingsReader } from '../mappings'
 import { WhitelistReader } from '../whitelist'
@@ -15,7 +15,11 @@ const getTableScopes = async (code: string, table: string) => {
     limit: 1000,
   }
 
-  const response = await rpc.get_table_by_scope(params)
+  logger.info('getTableScopes params', params)
+
+  // const response = await rpc.get_table_by_scope(params)
+  const response = await getTableByScope(params)
+
   // logger.info(`scopes for ${code} ${table}`, response.rows)
   const scopes = response.rows.map(({ scope }) => scope)
   return scopes
