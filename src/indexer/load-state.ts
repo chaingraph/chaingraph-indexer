@@ -15,10 +15,10 @@ const getTableScopes = async (code: string, table: string) => {
     limit: 1000,
   }
 
-  logger.info('getTableScopes params', params)
+  // logger.info('getTableScopes params', params)
 
-  // const response = await rpc.get_table_by_scope(params)
-  const response = await getTableByScope(params)
+  const response = await rpc.get_table_by_scope(params)
+  // const response = await getTableByScope(params)
 
   // logger.info(`scopes for ${code} ${table}`, response.rows)
   const scopes = response.rows.map(({ scope }) => scope)
