@@ -4,7 +4,6 @@ import {
 } from '@blockmatic/eosio-ship-reader'
 import { config } from '../config'
 import { getInfo } from '../lib/eosio'
-import { logger } from '../lib/logger'
 import { MappingsReader } from '../mappings'
 import { WhitelistReader } from '../whitelist'
 import { createShipReaderDataHelper } from './reader-helper'

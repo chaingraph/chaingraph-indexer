@@ -4,7 +4,7 @@ import {
   EosioReaderTableRowFilter,
   ShipTableDeltaName,
 } from '@blockmatic/eosio-ship-reader'
-import { fecthAbi } from '../lib/eosio'
+import { rpc } from '../lib/eosio'
 import { MappingsReader } from '../mappings'
 import {
   ChainGraphActionWhitelist,
@@ -86,8 +86,8 @@ export const createShipReaderDataHelper = async (
   // TODO: load abis to db when contracts are listed, and keep in sync with then chain, listed to set abi actions.
   abis = new Map()
   const contracts = whitelistReader.whitelist.map(({ contract }) => contract)
-  const abisArr = await Promise.all(contracts.map((c) => fecthAbi(c)))
-  abisArr.forEach(({ account_name, abi }) => abis.set(account_name, abi))
+  const abisArr = await Promise.all(contracts.map((c) => rpc.v1.chain.get_abi(c)))
+  abisArr.forEach(({ account_name, abi }) => abis.set(account_name, abi as any))
 
   // return latest abis in memory
   const contract_abis = () => abis
