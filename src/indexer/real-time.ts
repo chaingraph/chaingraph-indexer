@@ -1,8 +1,6 @@
-import { loadReader } from '../reader/ship-reader'
+import { concat, uniqBy } from 'lodash'
 import omit from 'lodash.omit'
-import { logger } from '../lib/logger'
-import { getChainGraphTableRowData, getPrimaryKey } from './utils'
-import { MappingsReader } from '../mappings'
+import { config } from '../config'
 import {
   deleteTableRows,
   upsertActions,
@@ -10,12 +8,14 @@ import {
   upsertTableRows,
   upsertTransactions,
 } from '../database'
-import { ChainGraphAction } from '../types'
-import { config } from '../config'
 import { deleteBlock } from '../database/queries'
+import { logger } from '../lib/logger'
+import { MappingsReader } from '../mappings'
+import { loadReader } from '../reader/ship-reader'
+import { ChainGraphAction } from '../types'
 import { WhitelistReader } from '../whitelist'
-import { concat, uniqBy } from 'lodash'
 import { loadCurrentTableState } from './load-state'
+import { getChainGraphTableRowData } from './utils'
 
 export const startRealTimeStreaming = async (
   mappingsReader: MappingsReader,
@@ -60,13 +60,15 @@ export const startRealTimeStreaming = async (
               Boolean(row.primary_key) &&
               !Boolean(
                 row.primary_key.normalize().toLowerCase().includes('undefined'),
-              )
+              ) &&
+              // TODO: configurable env owner filter
+              row.value.owner.match(/^(eosiodetroit|criptolions1|ivote4eosusa|eostitanprod|alohaeosprod|teamgreymass)$/)
             )
           })
           .map((row) => {
             // Regulating the ID type
             // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
-            const digested_row = {
+            const digestedRow = {
               ...row,
               value: {
                 ...row.value,
@@ -74,12 +76,18 @@ export const startRealTimeStreaming = async (
               },
             }
 
-            return getChainGraphTableRowData(digested_row, mappingsReader)
+            return ({
+              ...getChainGraphTableRowData(digestedRow, mappingsReader),
+              // mapping the id to make it unique
+              primary_key: `${row.scope}-${row.value?.owner}-${row.value.id}`
+            })
           }),
         'primary_key',
       )
 
       if (table_rows_deltas.length > 0 || delphioracle_rows_deltas.length > 0) {
+        // TODO: check if delphiorableRows should be included in the upsertTableRows...
+        // ! check if previous upsert is the same as this one
         await upsertTableRows(
           concat(table_rows_deltas, delphioracle_rows_deltas),
         )
@@ -151,6 +159,6 @@ export const startRealTimeStreaming = async (
     logger.warn(`Microfork on block number : ${block_num}`)
     // load current state of whitelisted tables,
     loadCurrentTableState(mappingsReader, whitelistReader)
-   }
+  }
   )
 }
