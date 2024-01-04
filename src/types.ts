@@ -13,7 +13,7 @@ export interface ChainGraphTableRow {
   table: string
   scope: string
   primary_key: string
-  data: {}
+  data: Record<string, number | string>
 }
 
 export interface ChainGraphChain {

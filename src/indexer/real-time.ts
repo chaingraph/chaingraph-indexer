@@ -1,4 +1,4 @@
-import { concat, uniqBy } from 'lodash'
+import { isEqual, uniqBy } from 'lodash'
 import omit from 'lodash.omit'
 import { config } from '../config'
 import {
@@ -12,10 +12,13 @@ import { deleteBlock } from '../database/queries'
 import { logger } from '../lib/logger'
 import { MappingsReader } from '../mappings'
 import { loadReader } from '../reader/ship-reader'
-import { ChainGraphAction } from '../types'
+import { ChainGraphAction, ChainGraphTableRow } from '../types'
 import { WhitelistReader } from '../whitelist'
 import { loadCurrentTableState } from './load-state'
 import { getChainGraphTableRowData } from './utils'
+
+const DELPHIORACLE_FOREX_PRICE_UPDATE_INTERVAL = 1 * (60 * (60 * 1000)) // 1hr (60min * (60sec * 1000ms))
+const DELPHIORACLE_CRYPTO_PRICE_UPDATE_INTERVAL = 5 * (60 * 1000) // 5min * (60sec * 1000ms)
 
 export const startRealTimeStreaming = async (
   mappingsReader: MappingsReader,
@@ -28,6 +31,9 @@ export const startRealTimeStreaming = async (
     whitelistReader,
   )
 
+  let pendingCommitDelphioracleTableRows: ChainGraphTableRow[] = []
+  let completedCommitDelphioracleTableRows: ChainGraphTableRow[] = []
+
   // we subscribe to eosio ship reader whitelisted block stream and insert the data in postgres thru prisma
   // this stream contains only the blocks that are relevant to the whitelisted contract tables and actions
   blocks$.subscribe(async (block) => {
@@ -37,7 +43,7 @@ export const startRealTimeStreaming = async (
       )
 
       // insert table_rows and filtering them by unique p_key to avoid duplicates and real-time crash
-      const table_rows_deltas = block.table_rows
+      const tableRowsDeltas = block.table_rows
         .filter((row) => {
           logger.warn('> The received row =>', { row })
           return (
@@ -51,47 +57,104 @@ export const startRealTimeStreaming = async (
         })
         .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
-      const delphioracle_rows_deltas = uniqBy(
-        block.table_rows
-          .filter((row) => {
-            return (
-              row.code === 'delphioracle' &&
-              row.present &&
-              Boolean(row.primary_key) &&
-              !Boolean(
-                row.primary_key.normalize().toLowerCase().includes('undefined'),
-              ) &&
-              // TODO: configurable env owner filter
-              row.value.owner.match(/^(eosiodetroit|criptolions1|ivote4eosusa|eostitanprod|alohaeosprod|teamgreymass)$/)
-            )
+      const delphioracleRowsDeltas: ChainGraphTableRow[] = block.table_rows
+        .filter((row) => {
+          return (
+            row.code === 'delphioracle' &&
+            row.present &&
+            Boolean(row.primary_key) &&
+            !Boolean(
+              row.primary_key.normalize().toLowerCase().includes('undefined'),
+            ) &&
+            // TODO: configurable env owner filter
+            row.value.owner.match(/^(eosiodetroit|criptolions1|ivote4eosusa|eostitanprod|alohaeosprod|teamgreymass)$/)
+          )
+        })
+        .map((row) => {
+          // Regulating the ID type
+          // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
+          const digestedRow = getChainGraphTableRowData({
+            ...row,
+            value: {
+              ...row.value,
+              id: parseInt(row.value.id, 10),
+            },
+          }, mappingsReader)
+
+          return ({
+            ...digestedRow,
+            // mapping the id to make it unique
+            primary_key: `${row.scope}-${row.value?.owner}-${row.value.id}`,
+            scope: digestedRow.scope.normalize().replace(/\"/g, ''),
           })
-          .map((row) => {
-            // Regulating the ID type
-            // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
-            const digestedRow = {
-              ...row,
-              value: {
-                ...row.value,
-                id: parseInt(row.value.id),
-              },
-            }
+        })
 
-            return ({
-              ...getChainGraphTableRowData(digestedRow, mappingsReader),
-              // mapping the id to make it unique
-              primary_key: `${row.scope}-${row.value?.owner}-${row.value.id}`
+      pendingCommitDelphioracleTableRows = uniqBy(delphioracleRowsDeltas, 'primary_key')
+      const filteredLimitDelphioracleBPRows = []
+      const upsertPendingRows = []
+
+      if (pendingCommitDelphioracleTableRows.length > 0 && completedCommitDelphioracleTableRows.length > 0) {
+        const previousCompletedCommitDelphioracleTableRows = completedCommitDelphioracleTableRows
+
+        completedCommitDelphioracleTableRows = previousCompletedCommitDelphioracleTableRows.map((row) => {
+          const pendingCommitRow = pendingCommitDelphioracleTableRows.find(
+            (pendingRow) => {
+              const pendingForexRowTime = new Date(pendingRow.data.timestamp).getTime() - DELPHIORACLE_FOREX_PRICE_UPDATE_INTERVAL
+              const pendingCryptoRowTime = new Date(pendingRow.data.timestamp).getTime() - DELPHIORACLE_CRYPTO_PRICE_UPDATE_INTERVAL
+              const rowTime = new Date(row.data.timestamp).getTime()
+
+              return pendingRow.primary_key === row.primary_key &&
+                // * this is to avoid the real-time to override the historical data that is already in the database and has same value
+                ((pendingForexRowTime > rowTime && pendingRow.scope.match(/^usdt/)) || pendingCryptoRowTime > rowTime) &&
+                pendingRow.data.value !== row.data.value
             })
-          }),
-        'primary_key',
-      )
 
-      if (table_rows_deltas.length > 0 || delphioracle_rows_deltas.length > 0) {
-        // TODO: check if delphiorableRows should be included in the upsertTableRows...
-        // ! check if previous upsert is the same as this one
-        await upsertTableRows(
-          concat(table_rows_deltas, delphioracle_rows_deltas),
-        )
+          if (pendingCommitRow) {
+            return pendingCommitRow
+          }
+
+          return row
+        }).sort((a, b) => {
+          // * This is to sort the rows by timestamp. Latest first
+          const aTime = new Date(a.data.timestamp).getTime()
+          const bTime = new Date(b.data.timestamp).getTime()
+
+          return bTime - aTime
+        })
+
+        if (!isEqual(completedCommitDelphioracleTableRows, previousCompletedCommitDelphioracleTableRows)) {
+          completedCommitDelphioracleTableRows.forEach((row) => {
+            const rowBPOwner = row.data.owner
+
+            if (filteredLimitDelphioracleBPRows.filter((filteredRow) => filteredRow.data.owner === rowBPOwner)?.length < 5) {
+              filteredLimitDelphioracleBPRows.push(row)
+            }
+          })
+        }
+
+        pendingCommitDelphioracleTableRows = []
+      } else if (pendingCommitDelphioracleTableRows.length > 0) {
+        completedCommitDelphioracleTableRows = completedCommitDelphioracleTableRows.concat(pendingCommitDelphioracleTableRows)
+        completedCommitDelphioracleTableRows.forEach((row) => {
+          const rowBPOwner = row.data.owner
+
+          if (filteredLimitDelphioracleBPRows.filter((filteredRow) => filteredRow.data.owner === rowBPOwner)?.length < 5) {
+            filteredLimitDelphioracleBPRows.push(row)
+          }
+        })
+
+        pendingCommitDelphioracleTableRows = []
       }
+
+      upsertPendingRows.push(...filteredLimitDelphioracleBPRows)
+
+      if (tableRowsDeltas.length > 0) {
+        // TODO: check if delphioracleRows should be included in the upsertTableRows...
+        // ! check if previous upsert is the same as this one
+        upsertPendingRows.push(...tableRowsDeltas)
+      }
+
+      await upsertTableRows(upsertPendingRows)
 
       // delete table_rows
       const deleted_table_rows = block.table_rows
@@ -159,6 +222,6 @@ export const startRealTimeStreaming = async (
     logger.warn(`Microfork on block number : ${block_num}`)
     // load current state of whitelisted tables,
     loadCurrentTableState(mappingsReader, whitelistReader)
-  }
+  },
   )
 }

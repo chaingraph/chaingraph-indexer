@@ -1,17 +1,16 @@
-import { logger } from '../lib/logger'
 import uniqBy from 'lodash.uniqby'
 import pThrottle from 'p-throttle'
-import { whilst } from '../lib/promises'
-import { MappingsReader } from '../mappings'
+import { config } from '../config'
 import { upsertActions, upsertBlocks, upsertTransactions } from '../database'
+import { HyperionAction, hyperion } from '../lib/hyperion'
+import { logger } from '../lib/logger'
+import { whilst } from '../lib/promises'
 import {
   ChainGraphAction,
   ChainGraphActionWhitelist,
   ChainGraphBlock,
   ChainGraphTransaction,
 } from '../types'
-import { hyperion, HyperionAction } from '../lib/hyperion'
-import { config } from '../config'
 import { WhitelistReader } from '../whitelist'
 
 type UpsertCollections = {
@@ -112,9 +111,7 @@ export const loadActionHistory = async (account: string, filter: string) => {
   })
 
   const loadHyperionPages = async () => {
-    const filter_page = `filter: ${account}:${filter}, limit: ${hyperionPageSize}, skip: ${
-      hyperionPageSize * page
-    }, page ${page}`
+    const filter_page = `filter: ${account}:${filter}, limit: ${hyperionPageSize}, skip: ${hyperionPageSize * page}, page ${page}`
     logger.info(`Loading action history from Hyperion for ${filter_page}`)
 
     try {
@@ -146,7 +143,7 @@ export const loadHistory = async (whitelistReader: WhitelistReader) => {
       .map(({ contract: code, actions }) => {
         // if wildcard we need reformat for hyperion
         if (actions[0] === '*') return [{ code, action: '*' }]
-        
+
         return (actions as ChainGraphActionWhitelist[]).map(({ action }) => {
           return {
             code,
@@ -157,7 +154,7 @@ export const loadHistory = async (whitelistReader: WhitelistReader) => {
       .flat()
 
     await Promise.all(
-      actionFilters.map(async ({action, code}) => loadActionHistory(code, action),
+      actionFilters.map(async ({ action, code }) => loadActionHistory(code, action),
       ),
     )
   } catch (error) {

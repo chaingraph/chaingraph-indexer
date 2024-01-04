@@ -1,8 +1,8 @@
 import { Subject } from 'rxjs'
-import { logger } from './lib/logger'
-import { db } from './database'
-import { ChainGraphMappings } from './types'
 import { config } from './config'
+import { db } from './database'
+import { logger } from './lib/logger'
+import { ChainGraphMappings } from './types'
 
 export interface MappingsReader {
   mappings$: Subject<ChainGraphMappings[]>
@@ -34,6 +34,6 @@ export const createMappingsReader = async (): Promise<MappingsReader> => {
 
   // resolve promise only after data has been loaded
   return new Promise((resolve) =>
-    mappings$.subscribe(() =>  resolve({ mappings, mappings$ }))
+    mappings$.subscribe(() => resolve({ mappings, mappings$ }))
   )
 }
