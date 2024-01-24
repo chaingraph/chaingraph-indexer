@@ -19,8 +19,10 @@ export const tableRowsColumnSet = new pgp.helpers.ColumnSet(
 )
 
 export const createUpsertTableRowsQuery = (tableRows: ChainGraphTableRow[]) =>
-  pgp.helpers.insert(tableRows, tableRowsColumnSet) +
-  ' ON CONFLICT ON CONSTRAINT tables_pkey DO UPDATE SET data=EXCLUDED.data;'
+  `${pgp.helpers.insert(
+    tableRows,
+    tableRowsColumnSet,
+  )} ON CONFLICT ON CONSTRAINT tables_pkey DO UPDATE SET data=EXCLUDED.data;`
 
 //  Transactions
 export const transactionsColumnSet = new pgp.helpers.ColumnSet(
@@ -40,9 +42,10 @@ export const transactionsColumnSet = new pgp.helpers.ColumnSet(
 export const createUpsertTransactionsQuery = (
   transactions: ChainGraphTransaction[],
 ) =>
-  pgp.helpers.insert(transactions, transactionsColumnSet) +
-  ' ON CONFLICT ON CONSTRAINT transactions_pkey DO UPDATE SET block_num=EXCLUDED.block_num,' +
-  ' cpu_usage_us=EXCLUDED.cpu_usage_us, net_usage=EXCLUDED.net_usage, net_usage_words=EXCLUDED.net_usage_words;'
+  `${pgp.helpers.insert(
+    transactions,
+    transactionsColumnSet,
+  )} ON CONFLICT ON CONSTRAINT transactions_pkey DO NOTHING`
 
 // Blocks
 export const blocksColumnSet = new pgp.helpers.ColumnSet(
@@ -54,8 +57,10 @@ export const blocksColumnSet = new pgp.helpers.ColumnSet(
 
 // TODO: At some point, when we upsertBlocks for real-time data, it throws duplicate key value violates unique constraint "blocks_block_id_key"
 export const createUpsertBlocksQuery = (blocks: ChainGraphBlock[]) =>
-  pgp.helpers.insert(blocks, blocksColumnSet) +
-  ' ON CONFLICT ON CONSTRAINT blocks_pkey DO UPDATE SET block_id=EXCLUDED.block_id, timestamp=EXCLUDED.timestamp, producer=EXCLUDED.producer;'
+  `${pgp.helpers.insert(
+    blocks,
+    blocksColumnSet,
+  )} ON CONFLICT ON CONSTRAINT blocks_pkey DO NOTHING`
 
 // Actions
 // https://github.com/vitaly-t/pg-promise/issues/809
@@ -82,11 +87,10 @@ export const actionsColumnSet = new pgp.helpers.ColumnSet<ChainGraphAction>(
 )
 
 export const createUpsertActionsQuery = (actions: ChainGraphAction[]) =>
-  pgp.helpers.insert(actions, actionsColumnSet) +
-  ' ON CONFLICT ON CONSTRAINT actions_pkey DO UPDATE SET data=EXCLUDED.data, ' +
-  ' "authorization"=EXCLUDED.authorization, global_sequence=EXCLUDED.global_sequence, action_ordinal=EXCLUDED.action_ordinal,' +
-  ' account_ram_deltas=EXCLUDED.account_ram_deltas, receipt=EXCLUDED.receipt, context_free=EXCLUDED.context_free,' +
-  ' account_disk_deltas=EXCLUDED.account_disk_deltas, console=EXCLUDED.console, receiver=EXCLUDED.receiver'
+  `${pgp.helpers.insert(
+    actions,
+    actionsColumnSet,
+  )} ON CONFLICT ON CONSTRAINT actions_pkey DO NTOHING`
 
 export const createDeleteTableRowsQuery = (
   table_rows: ChainGraphTableRow[],
@@ -94,7 +98,7 @@ export const createDeleteTableRowsQuery = (
   const list = table_rows.reduce(
     (list, { chain, contract, scope, primary_key, table }) =>
       `${
-        list ? list + ' ,' : ''
+        list ? `${list} ,` : ''
       } ('${chain}','${contract}','${scope}','${table}','${primary_key}')`,
     '',
   )
@@ -106,7 +110,7 @@ export const createDeleteTableRowsQuery = (
 
 export const deleteBlock = (chain: string, block_num: number) => {
   const query = pgp.as.format(
-    `DELETE FROM blocks WHERE chain = $1 AND block_num = $2`,
+    'DELETE FROM blocks WHERE chain = $1 AND block_num = $2',
     [chain, block_num],
   )
   return query
