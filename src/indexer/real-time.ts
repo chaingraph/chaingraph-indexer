@@ -19,6 +19,7 @@ import { getChainGraphTableRowData } from './utils'
 
 const DELPHIORACLE_FOREX_PRICE_UPDATE_INTERVAL = 1 * (60 * (60 * 1000)) // 1hr (60min * (60sec * 1000ms))
 const DELPHIORACLE_CRYPTO_PRICE_UPDATE_INTERVAL = 5 * (60 * 1000) // 5min * (60sec * 1000ms)
+const delphioracleProducers = config.delphioracle_producers
 
 export const startRealTimeStreaming = async (
   mappingsReader: MappingsReader,
@@ -57,36 +58,64 @@ export const startRealTimeStreaming = async (
         })
         .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
+      let delphioracleProducersFilter: {
+        producer: string
+        // Up to 5 scopes per scope value
+        scope: string
+        // cannot be more than 5
+        count: number
+      }[] = []
+
+      // sort first by timestamp and then filter by delphioracle producers
       const delphioracleRowsDeltas: ChainGraphTableRow[] = block.table_rows
+        .sort((a, b) => {
+          const aTime = new Date(a.value.timestamp).getTime()
+          const bTime = new Date(b.value.timestamp).getTime()
+
+          return bTime - aTime
+        })
         .filter((row) => {
-          return (
-            row.code === 'delphioracle' &&
+          const isDelphioracle = row.code === 'delphioracle' &&
             row.present &&
             Boolean(row.primary_key) &&
             !Boolean(
               row.primary_key.normalize().toLowerCase().includes('undefined'),
             ) &&
-            // TODO: configurable env owner filter
-            row.value.owner.match(/^(eosiodetroit|criptolions1|ivote4eosusa|eostitanprod|alohaeosprod|teamgreymass)$/)
-          )
+            delphioracleProducers.some((producer) => row.value.owner === producer)
+          const filteredRowData = delphioracleProducersFilter.filter((producer) => producer.producer === row.value.owner && producer.scope === row.scope)
+
+          if (isDelphioracle && filteredRowData.length === 0) {
+            delphioracleProducersFilter.push({
+              producer: row.value.owner,
+              scope: row.scope,
+              count: 1,
+            })
+          } else if (isDelphioracle && filteredRowData.length > 0) {
+            const producer = delphioracleProducersFilter.find((producer) => producer.producer === row.value.owner)
+
+            if (producer.count < 5) {
+              producer.count += 1
+            }
+          }
+
+          return isDelphioracle && filteredRowData[0].count <= 5
         })
         .map((row) => {
           // Regulating the ID type
           // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
+          const normalizedScope = row.scope.normalize().replace(/\"/g, '')
           const digestedRow = getChainGraphTableRowData({
             ...row,
             value: {
               ...row.value,
               id: parseInt(row.value.id, 10),
             },
+            // mapping the id to make it unique
+            primary_key: `${normalizedScope}-${row.value?.owner}-${row.value.id}`,
+            scope: normalizedScope,
           }, mappingsReader)
 
-          return ({
-            ...digestedRow,
-            // mapping the id to make it unique
-            primary_key: `${row.scope}-${row.value?.owner}-${row.value.id}`,
-            scope: digestedRow.scope.normalize().replace(/\"/g, ''),
-          })
+          return digestedRow
         })
 
       pendingCommitDelphioracleTableRows = uniqBy(delphioracleRowsDeltas, 'primary_key')
@@ -114,34 +143,16 @@ export const startRealTimeStreaming = async (
           }
 
           return row
-        }).sort((a, b) => {
-          // * This is to sort the rows by timestamp. Latest first
-          const aTime = new Date(a.data.timestamp).getTime()
-          const bTime = new Date(b.data.timestamp).getTime()
-
-          return bTime - aTime
         })
 
         if (!isEqual(completedCommitDelphioracleTableRows, previousCompletedCommitDelphioracleTableRows)) {
-          completedCommitDelphioracleTableRows.forEach((row) => {
-            const rowBPOwner = row.data.owner
-
-            if (filteredLimitDelphioracleBPRows.filter((filteredRow) => filteredRow.data.owner === rowBPOwner)?.length < 5) {
-              filteredLimitDelphioracleBPRows.push(row)
-            }
-          })
+          filteredLimitDelphioracleBPRows.push(completedCommitDelphioracleTableRows)
         }
 
         pendingCommitDelphioracleTableRows = []
       } else if (pendingCommitDelphioracleTableRows.length > 0) {
         completedCommitDelphioracleTableRows = completedCommitDelphioracleTableRows.concat(pendingCommitDelphioracleTableRows)
-        completedCommitDelphioracleTableRows.forEach((row) => {
-          const rowBPOwner = row.data.owner
-
-          if (filteredLimitDelphioracleBPRows.filter((filteredRow) => filteredRow.data.owner === rowBPOwner)?.length < 5) {
-            filteredLimitDelphioracleBPRows.push(row)
-          }
-        })
+        filteredLimitDelphioracleBPRows.push(completedCommitDelphioracleTableRows)
 
         pendingCommitDelphioracleTableRows = []
       }

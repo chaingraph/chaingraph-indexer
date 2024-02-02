@@ -102,18 +102,52 @@ export const loadCurrentTableState = async (
             mappingsReader,
           ),
         )
-        const tableData = tableDataDeltas.map((row) => {
-          if (row.contract === 'delphioracle') {
+        const tableData = tableDataDeltas.filter((row) => row.contract !== 'delphioracle')
+
+        let delphioracleProducersFilter: {
+          producer: string
+          // Up to 5 scopes per scope value
+          scope: string
+          // cannot be more than 5
+          count: number
+        }[] = []
+
+        const delphiOracleRows = tableData
+          .filter((row) => row.contract === 'delphioracle')
+          .sort((a, b) => {
+            const aTime = new Date(a.data.timestamp).getTime()
+            const bTime = new Date(b.data.timestamp).getTime()
+
+            return bTime - aTime
+          })
+          .filter((row) => {
+            const filteredRowData = delphioracleProducersFilter.filter((producer) => producer.producer === row.data.owner && producer.scope === row.scope)
+
+            if (filteredRowData.length === 0) {
+              delphioracleProducersFilter.push({
+                producer: row.data.owner as string,
+                scope: row.scope,
+                count: 1,
+              })
+            } else if (filteredRowData.length > 0) {
+              const producer = delphioracleProducersFilter.find((producer) => producer.producer === row.data.owner)
+
+              if (producer.count < 5) {
+                producer.count += 1
+              }
+            }
+
+            return filteredRowData[0].count <= 5
+          })
+          .map((row) => {
+            const normalizedScope = row.scope.normalize().replace(/\"/g, '')
             return {
               ...row,
               id: parseInt(row.data.id.toString(), 10),
-              primary_key: `${row.scope}-${row.data.owner}-${row.data.id}`,
-              scope: row.scope.normalize().replace(/\"/g, ''),
+              primary_key: `${normalizedScope}-${row.data.owner}-${row.data.id}`,
+              scope: normalizedScope,
             }
-          }
-
-          return row
-        })
+          })
 
         // NOTE: not sure why I'm getting duplicated rows.
         const unique_row_deltas: any[] = _.uniqBy(tableData, (row) => {
@@ -122,7 +156,7 @@ export const loadCurrentTableState = async (
           )
         })
 
-        return unique_row_deltas
+        return unique_row_deltas.concat(delphiOracleRows)
       }
 
       // get all table rows acrross all scope flat them out on all_rows array
