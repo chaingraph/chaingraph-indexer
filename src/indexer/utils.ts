@@ -36,9 +36,8 @@ export const getPrimaryKey = (
       case 'extended_asset_symbol':
         primary_key =
           row.table === 'stablev2'
-            ? `balance_${
-                row.value[tableMappings.table_key].quantity.split(' ')[1]
-              }`
+            ? `balance_${row.value[tableMappings.table_key].quantity.split(' ')[1]
+            }`
             : row.value[tableMappings.table_key].quantity.split(' ')[1]
         break
       default:
@@ -58,8 +57,10 @@ export const getChainGraphTableRowData = (
   row: EosioReaderTableRow,
   mappingsReader: MappingsReader,
 ): ChainGraphTableRow => {
+  const normalizedScope = row.scope.toString().normalize().replace(/"/g, '')
   return {
     ...omit(row, 'value', 'code', 'present', 'primary_key'),
+    scope: normalizedScope,
     primary_key: getPrimaryKey(row, mappingsReader),
     data: row.value,
     contract: row.code,

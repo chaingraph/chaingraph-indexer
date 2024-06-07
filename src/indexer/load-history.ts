@@ -125,8 +125,7 @@ export const loadActionHistory = async (account: string, filter: string) => {
       morePages = false
       return false
     } catch (error) {
-      logger.error(error)
-      logger.info('hyperion request failed')
+      logger.error('Hyperion request failed: ', error)
       return process.exit(0) // keep trying
     }
   }

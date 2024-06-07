@@ -103,7 +103,6 @@ export const startRealTimeStreaming = async (
         .map((row) => {
           // Regulating the ID type
           // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
-          const normalizedScope = row.scope.normalize().replace(/\"/g, '')
           const digestedRow = getChainGraphTableRowData({
             ...row,
             value: {
@@ -111,8 +110,7 @@ export const startRealTimeStreaming = async (
               id: parseInt(row.value.id, 10),
             },
             // mapping the id to make it unique
-            primary_key: `${normalizedScope}-${row.value?.owner}-${row.value.id}`,
-            scope: normalizedScope,
+            primary_key: `${row.scope}-${row.value?.owner}-${row.value.id}`,
           }, mappingsReader)
 
           return digestedRow

@@ -140,12 +140,10 @@ export const loadCurrentTableState = async (
             return filteredRowData[0].count <= 5
           })
           .map((row) => {
-            const normalizedScope = row.scope.normalize().replace(/\"/g, '')
             return {
               ...row,
               id: parseInt(row.data.id.toString(), 10),
-              primary_key: `${normalizedScope}-${row.data.owner}-${row.data.id}`,
-              scope: normalizedScope,
+              primary_key: `${row.scope}-${row.data.owner}-${row.data.id}`,
             }
           })
 
