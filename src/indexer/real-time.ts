@@ -225,7 +225,11 @@ export const startRealTimeStreaming = async (
 
   close$.subscribe(() => logger.info('connection closed'))
   // log$.subscribe(({ message }: any) => logger.info('ShipReader:', message))
-  errors$.subscribe((error) => logger.error('ShipReader:', error))
+  errors$.subscribe((error) => {
+    logger.error('ShipReader Connection Error:', { error })
+    // send message to discord
+    process.exit(1)
+  })
 
   forks$.subscribe((block_num) => {
     logger.warn(`Microfork on block number : ${block_num}`)
