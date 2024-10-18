@@ -20,12 +20,14 @@ export interface EosioReaderConfig {
 
 export interface Config {
   database_url: string
+  delphioracle_producers: string[]
   hyperion_url: string
   reader: EosioReaderConfig
 }
 
 export const config: Config = {
   database_url: env.get('DATABASE_URL').required().asString(),
+  delphioracle_producers: env.get('DELPHIORACLE_PRODUCERS').required().asArray(),
   reader: {
     chain: 'eos',
     chain_id:
