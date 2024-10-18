@@ -10,6 +10,3 @@ export const getInfo = async () =>
   fetch(`${config.reader.rpc_url}/v1/chain/get_info`).then((res: any) =>
     res.json(),
   )
-
-export const getNationInfo = () =>
-  fetch('https://eos.api.eosnation.io/v1/chain/get_info').then((res: any) => res.json())
