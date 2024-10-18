@@ -1,5 +1,6 @@
 import Promise from 'bluebird'
 import _ from 'lodash'
+import pThrottle from 'p-throttle'
 import { upsertTableRows } from '../database'
 import { rpc } from '../lib/eosio'
 import { logger } from '../lib/logger'
@@ -13,7 +14,7 @@ const getTableScopes = async (code: string, table: string) => {
   const params = {
     code,
     table,
-    limit: 1000,
+    limit: 10000,
   }
 
   //  logger.info('getTableScopes params', params)
@@ -26,9 +27,8 @@ const getTableScopes = async (code: string, table: string) => {
   }
 
   // const response = await getTableByScope(params)
-
-  // logger.info(`scopes for ${code} ${table}`, response.rows)
-  const scopes = response.rows.map(({ scope }) => scope)
+  const scopes: string[] = response.rows.map(({ scope }) => scope.toString())
+  logger.info(`scopes for ${code} ${table}`, response.rows?.length)
   return scopes
 }
 
@@ -84,12 +84,26 @@ export const loadCurrentTableState = async (
         if (scopes.length === 0) return
         // tables rows requests for this table
         async function fn(scope) {
-          const { rows } = await rpc.v1.chain.get_table_rows({
-            code: contract,
-            scope,
-            table,
-            limit: 1000000,
-          })
+          let rows: any[]
+          try {
+            const response = await throttledGetTableRows({
+              contract,
+              scope,
+              table,
+            })
+            rows = response.rows
+          } catch (error) {
+            console.error(
+              '====================== Failed to get Table Rows ======================= \n',
+              error,
+              '\n=============================================',
+            )
+            console.trace(
+              '====================== Error Trace ======================= \n',
+              error,
+            )
+          }
+
           // for each row get the right format for ChainGraph
           const tableDataDeltas = rows.map((row) =>
             getChainGraphTableRowData(
@@ -193,3 +207,35 @@ export const loadCurrentTableState = async (
   //  for each table in registry get all of its data ( all scopes and rows ) and pushed it to the database
   Promise.map(whitelistReader.whitelist as any, mapper, { concurrency: 1 })
 }
+
+// ? this might not be necessary, though a concurrency issue has been found...
+const throttleRequest = pThrottle({
+  limit: 1,
+  interval: 500,
+})
+
+const throttledGetTableRows = throttleRequest(
+  async ({
+    contract,
+    table,
+    scope,
+  }: {
+    contract: string
+    table: string
+    scope: string
+  }) => {
+    logger.info(
+      `===> throttledGetTableRows for ${contract}:${table} with scope ${scope}`,
+    )
+    const response = await rpc.v1.chain.get_table_rows({
+      code: contract,
+      scope,
+      table,
+      limit: 10000000,
+    })
+    logger.info(
+      `===> response for ${contract}:${table} with scope ${scope}, ${response.rows.length}`,
+    )
+    return response
+  },
+)
