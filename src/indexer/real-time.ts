@@ -10,10 +10,10 @@ import {
 } from '../database'
 import { deleteBlock } from '../database/queries'
 import { logger } from '../lib/logger'
-import { MappingsReader } from '../mappings'
+import type { MappingsReader } from '../mappings'
 import { loadReader } from '../reader/ship-reader'
-import { ChainGraphAction, ChainGraphTableRow } from '../types'
-import { WhitelistReader } from '../whitelist'
+import type { ChainGraphAction, ChainGraphTableRow } from '../types'
+import type { WhitelistReader } from '../whitelist'
 import { loadCurrentTableState } from './load-state'
 import { getChainGraphTableRowData } from './utils'
 
@@ -51,20 +51,20 @@ export const startRealTimeStreaming = async (
             row.code !== 'delphioracle' &&
             row.present &&
             Boolean(row.primary_key) &&
-            !Boolean(
-              row.primary_key.normalize().toLowerCase().includes('undefined'),
-            )
+            !row.primary_key.normalize().toLowerCase().includes('undefined')
           )
         })
         .map((row) => getChainGraphTableRowData(row, mappingsReader))
 
-      let delphioracleProducersFilter: {
+      const delphioracleProducersFilter: {
         producer: string
         // Up to 5 scopes per scope value
         scope: string
         // cannot be more than 5
         count: number
       }[] = []
+
+      const currentTime = Date.now()
 
       // sort first by timestamp and then filter by delphioracle producers
       const delphioracleRowsDeltas: ChainGraphTableRow[] = block.table_rows
@@ -75,14 +75,19 @@ export const startRealTimeStreaming = async (
           return bTime - aTime
         })
         .filter((row) => {
-          const isDelphioracle = row.code === 'delphioracle' &&
+          const isDelphioracle =
+            row.code === 'delphioracle' &&
             row.present &&
             Boolean(row.primary_key) &&
-            !Boolean(
-              row.primary_key.normalize().toLowerCase().includes('undefined'),
-            ) &&
-            delphioracleProducers.some((producer) => row.value.owner === producer)
-          const filteredRowData = delphioracleProducersFilter.filter((producer) => producer.producer === row.value.owner && producer.scope === row.scope)
+            !row.primary_key.normalize().toLowerCase().includes('undefined') &&
+            delphioracleProducers.some(
+              (producer) => row.value.owner === producer,
+            )
+          const filteredRowData = delphioracleProducersFilter.filter(
+            (producer) =>
+              producer.producer === row.value.owner &&
+              producer.scope === row.scope,
+          )
 
           if (isDelphioracle && filteredRowData.length === 0) {
             delphioracleProducersFilter.push({
@@ -90,8 +95,10 @@ export const startRealTimeStreaming = async (
               scope: row.scope,
               count: 1,
             })
-          } else if (isDelphioracle && filteredRowData.length > 0) {
-            const producer = delphioracleProducersFilter.find((producer) => producer.producer === row.value.owner)
+          } else if (isDelphioracle && filteredRowData.length) {
+            const producer = delphioracleProducersFilter.find(
+              (producer) => producer.producer === row.value.owner,
+            )
 
             if (producer.count < 5) {
               producer.count += 1
@@ -103,54 +110,86 @@ export const startRealTimeStreaming = async (
         .map((row) => {
           // Regulating the ID type
           // This avoid when real-time change historical with the upsert and since ID is a number for historical and a string for real-time, we turn the ID into a number
-          const digestedRow = getChainGraphTableRowData({
-            ...row,
-            value: {
-              ...row.value,
-              id: parseInt(row.value.id, 10),
+          const digestedRow = getChainGraphTableRowData(
+            {
+              ...row,
+              value: {
+                ...row.value,
+                id: Number.parseInt(row.value.id, 10),
+              },
+              // mapping the id to make it unique
+              primary_key: `${row.scope}-${row.value?.owner}-${row.value.id}`,
             },
-            // mapping the id to make it unique
-            primary_key: `${row.scope}-${row.value?.owner}-${row.value.id}`,
-          }, mappingsReader)
+            mappingsReader,
+          )
 
           return digestedRow
         })
 
-      pendingCommitDelphioracleTableRows = uniqBy(delphioracleRowsDeltas, 'primary_key')
+      pendingCommitDelphioracleTableRows = uniqBy(
+        delphioracleRowsDeltas,
+        'primary_key',
+      )
       const filteredLimitDelphioracleBPRows = []
       const upsertPendingRows = []
 
-      if (pendingCommitDelphioracleTableRows.length > 0 && completedCommitDelphioracleTableRows.length > 0) {
-        const previousCompletedCommitDelphioracleTableRows = completedCommitDelphioracleTableRows
+      if (
+        pendingCommitDelphioracleTableRows.length > 0 &&
+        completedCommitDelphioracleTableRows.length > 0
+      ) {
+        const previousCompletedCommitDelphioracleTableRows =
+          completedCommitDelphioracleTableRows
 
-        completedCommitDelphioracleTableRows = previousCompletedCommitDelphioracleTableRows.map((row) => {
-          const pendingCommitRow = pendingCommitDelphioracleTableRows.find(
-            (pendingRow) => {
-              const pendingForexRowTime = new Date(pendingRow.data.timestamp).getTime() - DELPHIORACLE_FOREX_PRICE_UPDATE_INTERVAL
-              const pendingCryptoRowTime = new Date(pendingRow.data.timestamp).getTime() - DELPHIORACLE_CRYPTO_PRICE_UPDATE_INTERVAL
-              const rowTime = new Date(row.data.timestamp).getTime()
+        completedCommitDelphioracleTableRows =
+          previousCompletedCommitDelphioracleTableRows.map((row) => {
+            const pendingCommitRow = pendingCommitDelphioracleTableRows.find(
+              (pendingRow) => {
+                const pendingForexRowTime =
+                  new Date(pendingRow.data.timestamp).getTime() -
+                  DELPHIORACLE_FOREX_PRICE_UPDATE_INTERVAL
+                const pendingCryptoRowTime =
+                  new Date(pendingRow.data.timestamp).getTime() -
+                  DELPHIORACLE_CRYPTO_PRICE_UPDATE_INTERVAL
+                const rowTime = new Date(row.data.timestamp).getTime()
 
-              return pendingRow.primary_key === row.primary_key &&
-                // * this is to avoid the real-time to override the historical data that is already in the database and has same value
-                ((pendingForexRowTime > rowTime && pendingRow.scope.match(/^usdt/)) || pendingCryptoRowTime > rowTime) &&
-                pendingRow.data.value !== row.data.value
-            })
+                return (
+                  pendingRow.primary_key === row.primary_key &&
+                  // * this is to avoid the real-time to override the historical data that is already in the database and has same value
+                  ((pendingForexRowTime > rowTime &&
+                    pendingRow.scope.match(/^usdt/)) ||
+                    (pendingCryptoRowTime > rowTime &&
+                      pendingRow.data.value !== row.data.value))
+                )
+              },
+            )
 
-          if (pendingCommitRow) {
-            return pendingCommitRow
-          }
+            if (pendingCommitRow) {
+              return pendingCommitRow
+            }
 
-          return row
-        })
+            return row
+          })
 
-        if (!isEqual(completedCommitDelphioracleTableRows, previousCompletedCommitDelphioracleTableRows)) {
-          filteredLimitDelphioracleBPRows.push(completedCommitDelphioracleTableRows)
+        if (
+          !isEqual(
+            completedCommitDelphioracleTableRows,
+            previousCompletedCommitDelphioracleTableRows,
+          )
+        ) {
+          filteredLimitDelphioracleBPRows.push(
+            completedCommitDelphioracleTableRows,
+          )
         }
 
         pendingCommitDelphioracleTableRows = []
       } else if (pendingCommitDelphioracleTableRows.length > 0) {
-        completedCommitDelphioracleTableRows = completedCommitDelphioracleTableRows.concat(pendingCommitDelphioracleTableRows)
-        filteredLimitDelphioracleBPRows.push(completedCommitDelphioracleTableRows)
+        completedCommitDelphioracleTableRows =
+          completedCommitDelphioracleTableRows.concat(
+            pendingCommitDelphioracleTableRows,
+          )
+        filteredLimitDelphioracleBPRows.push(
+          completedCommitDelphioracleTableRows,
+        )
 
         pendingCommitDelphioracleTableRows = []
       }
@@ -235,6 +274,5 @@ export const startRealTimeStreaming = async (
     logger.warn(`Microfork on block number : ${block_num}`)
     // load current state of whitelisted tables,
     loadCurrentTableState(mappingsReader, whitelistReader)
-  },
-  )
+  })
 }
