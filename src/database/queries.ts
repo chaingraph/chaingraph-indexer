@@ -1,14 +1,13 @@
 // ColumnSet for bulk inserts
 // https://github.com/vitaly-t/pg-promise/wiki/Data-Imports
 
-import { pgp } from './db'
 import {
   ChainGraphAction,
   ChainGraphBlock,
   ChainGraphTableRow,
   ChainGraphTransaction,
 } from '../types'
-import { logger } from '../lib/logger'
+import { pgp } from './db'
 
 // Table Rows
 export const tableRowsColumnSet = new pgp.helpers.ColumnSet(
@@ -90,7 +89,7 @@ export const createUpsertActionsQuery = (actions: ChainGraphAction[]) =>
   `${pgp.helpers.insert(
     actions,
     actionsColumnSet,
-  )} ON CONFLICT ON CONSTRAINT actions_pkey DO NTOHING`
+  )} ON CONFLICT ON CONSTRAINT actions_pkey DO NOTHING`
 
 export const createDeleteTableRowsQuery = (
   table_rows: ChainGraphTableRow[],
