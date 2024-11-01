@@ -105,7 +105,7 @@ export const startRealTimeStreaming = async (
             }
           }
 
-          return isDelphioracle && filteredRowData[0].count <= 5
+          return isDelphioracle && filteredRowData[0]?.count <= 5
         })
         .map((row) => {
           // Regulating the ID type

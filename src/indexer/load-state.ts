@@ -161,7 +161,7 @@ export const loadCurrentTableState = async (
                 }
               }
 
-              return filteredRowData[0].count <= 5
+              return filteredRowData[0]?.count <= 5
             })
             .map((row) => {
               return {

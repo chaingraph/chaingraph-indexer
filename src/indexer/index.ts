@@ -1,8 +1,8 @@
-import { startRealTimeStreaming } from './real-time'
-import { loadCurrentTableState } from './load-state'
-import { loadHistory } from './load-history'
 import { createMappingsReader } from '../mappings'
 import { createWhitelistReader } from '../whitelist'
+import { loadHistory } from './load-history'
+import { loadCurrentTableState } from './load-state'
+import { startRealTimeStreaming } from './real-time'
 
 export const startIndexer = async () => {
   // get instances of the mappings and whitelist readers
@@ -14,7 +14,13 @@ export const startIndexer = async () => {
   // start indexing state updates in real-time as soon as the server starts
    startRealTimeStreaming(mappingsReader, whitelistReader)
   // load current state of whitelisted tables, overwritting real-time stream insn't an issue since it's the latest state
-   loadCurrentTableState(mappingsReader, whitelistReader)
+  try {
+    loadCurrentTableState(mappingsReader, whitelistReader)
+  } catch (error) {
+    console.error(error)
+    process.exit()
+  }
+
   // load historical action and transaction data from hyperion community edition
    loadHistory(whitelistReader)
 }
